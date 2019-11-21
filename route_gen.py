@@ -55,10 +55,10 @@ def main(argv):
     else :
         nb_aircraft = 5
         nb_airport = 30
-        mean_length_flight = 5
-        var_length_flight = 2
-        min_length_flight = 2
-        max_length_flight = 10
+        mean_length_flight = 80
+        var_length_flight = 15
+        min_length_flight = 30
+        max_length_flight = 150
         mean_flight_per_aicraft = 100
         var_flight_per_aicraft = 10
         min_flight_per_aicraft = 20
@@ -67,10 +67,10 @@ def main(argv):
         var_tat = 10
         min_tat = 30
         max_tat = 60
-        mean_on_ground = 30
-        var_on_ground = 10
+        mean_on_ground = 3000
+        var_on_ground = 1000
         min_on_ground = 0
-        max_on_ground = 60
+        max_on_ground = 6000
 
     # TODO : check the user inputs
 
@@ -112,7 +112,7 @@ def main(argv):
 def gannt(flights):
     data = []
     for flight in flights:
-        flight_data = [flight.assigned_aircraft, datetime.datetime.fromtimestamp(flight.start_date), datetime.datetime.fromtimestamp(flight.end_date), str(flight.start_airport) + " - " + str(flight.end_airport), flight.tat]
+        flight_data = ["Aircraft " + str(flight.assigned_aircraft), datetime.datetime.fromtimestamp(flight.start_date), datetime.datetime.fromtimestamp(flight.end_date), str(flight.start_airport) + " - " + str(flight.end_airport), flight.tat]
         data.append(flight_data)
     df = pd.DataFrame(data, columns=["Task", "Start", "Finish", "Resource", "Complete"])
     print(df)
