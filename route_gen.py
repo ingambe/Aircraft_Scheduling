@@ -5,9 +5,10 @@ import sys
 import pandas as pd
 import plotly.figure_factory as ff
 import datetime
+import plotly.graph_objects as go
 
 def injective_airport(start, end):
-    """ Injective function to map [0, nb\_airport] -> [0, nb\_airport]\start """ 
+    """ Injective function to map [0, nb_airport] -> [0, nb_airport]\start """ 
     if end < start:
         return end
     return end + 1
@@ -74,7 +75,10 @@ def main(argv):
 
     # TODO : check the user inputs
 
+    # all the flight created and allocated to an aircraft
     flights = []
+    
+    flights_created = dict()
 
     time_now = time.time()
 
@@ -105,8 +109,15 @@ def main(argv):
                 previous = flights[-1]
                 minimal_legal_start = previous.end_date + previous.tat
                 start_date = minimal_legal_start + truncated_norm(min_on_ground, max_on_ground, mean_on_ground, var_on_ground)
+                # if we already got a flight starting from A to B, we get back the length of fly and TAT
+                if (start_airport, end_airport) in flights_created:
+                    previously_created = flights_created[(start_airport, end_airport)]
+                    length_fly = previously_created.length_fly
+                    tat = previously_created.tat
             flight_object = Flight(start_date, length_fly, start_airport, end_airport, aircraft, tat)
             flights.append(flight_object)
+            if not (start_airport, end_airport) in flights_created:
+                flights_created[(start_airport, end_airport)] = flight_object
     gannt(flights)
 
 def gannt(flights):
@@ -115,7 +126,6 @@ def gannt(flights):
         flight_data = ["Aircraft " + str(flight.assigned_aircraft), datetime.datetime.fromtimestamp(flight.start_date), datetime.datetime.fromtimestamp(flight.end_date), str(flight.start_airport) + " - " + str(flight.end_airport), flight.tat]
         data.append(flight_data)
     df = pd.DataFrame(data, columns=["Task", "Start", "Finish", "Resource", "Complete"])
-    print(df)
     fig = ff.create_gantt(df, group_tasks=True)
     fig.show()
     
