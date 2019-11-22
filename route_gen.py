@@ -1,11 +1,13 @@
 import numpy as np
 from scipy.stats import truncnorm
+import random
 import time
 import sys
 import pandas as pd
 import plotly.figure_factory as ff
 import datetime
 import plotly.graph_objects as go
+import math
 
 def injective_airport(start, end):
     """ Injective function to map [0, nb_airport] -> [0, nb_airport]\start """ 
@@ -109,16 +111,16 @@ def main(argv):
         min_on_ground = int(input("Min time on ground between two flights (in minutes) : "))
         max_on_ground = int(input("Max time on ground between two flights (in minutes) : "))
     else :
-        nb_aircraft = 5
-        nb_airport = 30
+        nb_aircraft = 2
+        nb_airport = 3
         mean_length_flight = 80
         var_length_flight = 15
         min_length_flight = 30
         max_length_flight = 150
-        mean_flight_per_aicraft = 100
-        var_flight_per_aicraft = 10
-        min_flight_per_aicraft = 20
-        max_flight_per_aicraft = 150
+        mean_flight_per_aicraft = 3
+        var_flight_per_aicraft = 1
+        min_flight_per_aicraft = 2
+        max_flight_per_aicraft = 4
         mean_tat = 45
         var_tat = 10
         min_tat = 30
@@ -155,16 +157,16 @@ def main(argv):
             # for the first flight, the start airport is to be choosed between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
             if first_flight:
-                start_airport = truncated_norm(1, nb_airport, nb_airport / 2, nb_airport / 4)
-                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
+                start_airport = truncated_norm(1, nb_airport, math.ceil(nb_airport / 2), math.ceil(nb_airport / 4))
+                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, math.ceil((nb_airport - 1) / 2), math.ceil((nb_airport - 1) / 4)))
                 # multiply by 60 to convert from minute to second (epoch is in second)
                 # this allow to have a normal distribution between the flight end a time now and the flight start at time now
                 start_date = truncated_norm(time_now - length_fly, time_now + length_fly, time_now, time_now / 4)
             else:
-                start_airport = injective_airport(0, truncated_norm(0, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
-                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
                 # we recover the previous fligth (last added)
                 previous = flights[-1]
+                start_airport = previous.end_airport
+                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
                 minimal_legal_start = previous.end_date + previous.tat
                 start_date = minimal_legal_start + truncated_norm(min_on_ground, max_on_ground, mean_on_ground, var_on_ground)
                 # if we already got a flight starting from A to B, we get back the length of fly and TAT
@@ -183,16 +185,24 @@ def main(argv):
             if not (start_airport, end_airport) in flights_created:
                 flights_created[(start_airport, end_airport)] = flight_object
     model = Model(nb_aircraft, nb_airport, flights, first_fligth_aircraft)
-    gannt(flights)
+    gannt(model)
     asp_input_fact("test.lp", model)
 
-def gannt(flights):
+def gannt(model):
     data = []
-    for flight in flights:
+    for flight in model.flights:
         flight_data = ["Aircraft " + str(flight.assigned_aircraft), datetime.datetime.fromtimestamp(flight.start_date), datetime.datetime.fromtimestamp(flight.end_date), str(flight.start_airport) + " - " + str(flight.end_airport), flight.tat]
         data.append(flight_data)
     df = pd.DataFrame(data, columns=["Task", "Start", "Finish", "Resource", "Complete"])
-    fig = ff.create_gantt(df, group_tasks=True)
+    colors = [tuple([random.random() for i in range(3)]) for i in range(model.nb_airport)]
+    fig = ff.create_gantt(df,colors=colors, group_tasks=True)
+    # we need to create label for displaying the start and end airport
+    tmp = []
+    for flight in model.flights:
+        tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.start_date)), y=model.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.start_airport), showarrow=False, font=dict(color='black')))
+        tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date)), y=model.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.end_airport), showarrow=False, font=dict(color='black')))
+    #fig['layout']['annotations'] = [dict(x='2019-11-20',y=1,text="This is a label", showarrow=False, font=dict(color='white'))]
+    fig['layout']['annotations'] = tuple(tmp)
     fig.show()
 
 def asp_input_fact(output_file, model):
