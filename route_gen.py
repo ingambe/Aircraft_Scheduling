@@ -18,10 +18,14 @@ def truncated_norm(minimum, maximum, mean, sd):
 
 class Model(object):
     def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft):
-         self.nb_aircraft = nb_aircraft
-         self.nb_airport = nb_airport
-         self.flights = fligths
-         self.first_fligth_aircraft = first_fligth_aircraft
+        self.nb_aircraft = nb_aircraft
+        self.nb_airport = nb_airport
+        self.flights = fligths
+        self.first_fligth_aircraft = first_fligth_aircraft
+        # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
+        self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
+        for flight in self.flights:
+           self.flight_of_aircraft[flight.assigned_aircraft].append(flight)
 
     def __repr__(self):
         result = ""
@@ -31,7 +35,8 @@ class Model(object):
         # we now print for each aircraft is first flight
         for aircraft in range(len(self.first_fligth_aircraft)):
             flight = self.first_fligth_aircraft[aircraft]
-            result += "first({}, {}). ".format(flight.id, aircraft)
+            # +1 because we count aircraft starting from 1 and not 0
+            result += "first({}, {}). ".format(flight.id, aircraft + 1)
         result += "\n"
         # we add the airport of departure
         for flight in self.flights:
@@ -53,6 +58,16 @@ class Model(object):
         for flight in self.flights:
             result += "tat({}, {}). ".format(flight.id, flight.tat)
         result += "\n"
+        # now we will add the solution as a comment
+        result += "\n"
+        # way more conveniant to check if we get one line per aircraft
+        result += "%* One possible solution: \n"
+        for aircraft in range(len(self.flight_of_aircraft)):
+            result += "For aircraft {}\n".format(aircraft + 1)
+            for flight in self.flight_of_aircraft[aircraft]:
+                result += "assign({}, {}). ".format(flight.id, aircraft + 1)
+            result += "\n\n"
+        result += "*%\n"
         return result
 
 class Flight(object):
@@ -140,14 +155,14 @@ def main(argv):
             # for the first flight, the start airport is to be choosed between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
             if first_flight:
-                start_airport = truncated_norm(0, nb_airport, nb_airport / 2, nb_airport / 4)
-                end_airport = injective_airport(start_airport, truncated_norm(0, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
+                start_airport = truncated_norm(1, nb_airport, nb_airport / 2, nb_airport / 4)
+                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
                 # multiply by 60 to convert from minute to second (epoch is in second)
                 # this allow to have a normal distribution between the flight end a time now and the flight start at time now
                 start_date = truncated_norm(time_now - length_fly, time_now + length_fly, time_now, time_now / 4)
             else:
-                start_airport = injective_airport(start_airport, truncated_norm(0, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
-                end_airport = injective_airport(start_airport, truncated_norm(0, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
+                start_airport = injective_airport(0, truncated_norm(0, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
+                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
                 # we recover the previous fligth (last added)
                 previous = flights[-1]
                 minimal_legal_start = previous.end_date + previous.tat
@@ -157,7 +172,8 @@ def main(argv):
                     previously_created = flights_created[(start_airport, end_airport)]
                     length_fly = previously_created.length_fly
                     tat = previously_created.tat
-            id = len(flights)
+            # we start the index at 1
+            id = len(flights) + 1
             flight_object = Flight(id, start_date, length_fly, start_airport, end_airport, aircraft, tat)
             # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
             if first_flight :
