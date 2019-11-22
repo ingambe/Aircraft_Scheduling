@@ -7,8 +7,10 @@ airport(1..2).
 % first(FLIGHT, AIRCRAFT).
 first(1, 1). first(2, 1).
 % defined the airport of start
+% airport_start(FLIGHT, AIRCRAFT).
 airport_start(1, 2). airport_start(2, 1). airport_start(3, 1). airport_start(4, 2). airport_start(5, 2). airport_start(6, 1).
 % airport of end of each flight
+% airport_end(FLIGHT, AIRCRAFT).
 airport_end(1, 1). airport_end(2, 2). airport_end(3, 2). airport_end(4, 1). airport_end(5, 1). airport_end(6, 2).
 % define the time of start of a flight, the date is EPOCH time represented by a timestamp
 start(1, 845920800). start(2, 845917800). start(3, 845928000). start(4, 845929800). start(5, 845935200). start(6, 845937000). 
