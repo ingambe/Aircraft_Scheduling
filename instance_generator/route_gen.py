@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+import pathlib
 from scipy.stats import truncnorm
 import random
 import time
@@ -47,9 +48,15 @@ def main():
     parser.add_argument('--minGroundTime', type=int, help="Min time on ground between two flights (in minutes)")
     parser.add_argument('--maxGroundTime', type=int, help="Max time on ground between two flights (in minutes)")
 
+    parser.add_argument('--output_file', type=str, help="The name of the output file of the instance")
+
     parser.add_argument('--default', action='store_true', help="This generate instancies with default value for the previously listed arguments")
 
     args = parser.parse_args()
+
+    output_file = "instance"
+    if args.output_file != None:
+        output_file =  args.output_file
 
     # if the user asked for default value
     if args.default:
@@ -183,7 +190,7 @@ def main():
                 flights_created[(start_airport, end_airport)] = flight_object
     solution = models.Solution(nb_aircraft, nb_airport, flights, first_fligth_aircraft)
     gannt(solution)
-    asp_input_fact("test.lp", solution)
+    asp_input_fact(output_file, solution)
 
 def gannt(solution):
     data = []
@@ -212,7 +219,8 @@ def gannt(solution):
     fig.show()
 
 def asp_input_fact(output_file, solution):
-    file = open(output_file, "w")
+    # we put the generated instance inside the ../instances folder
+    file = open(str(pathlib.Path(__file__).parent.parent) + "/instances/" + output_file + ".lp", "w")
     file.write(repr(solution))
 
 
