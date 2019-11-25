@@ -167,7 +167,7 @@ def main(argv):
                 previous = flights[-1]
                 start_airport = previous.end_airport
                 end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
-                minimal_legal_start = previous.end_date + previous.tat
+                minimal_legal_start = previous.end_date + (previous.tat * 60)
                 start_date = minimal_legal_start + truncated_norm(min_on_ground, max_on_ground, mean_on_ground, var_on_ground)
                 # if we already got a flight starting from A to B, we get back the length of fly and TAT
                 if (start_airport, end_airport) in flights_created:
