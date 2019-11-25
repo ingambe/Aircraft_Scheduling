@@ -46,7 +46,7 @@ class Model(object):
         result += "\n"
         # we add the airport of destination
         for flight in self.flights:
-            result += "airport_end({}, {}). ".format(flight.id, flight.start_airport)
+            result += "airport_end({}, {}). ".format(flight.id, flight.end_airport)
         result += "\n"
         # we add the start date of the flight
         for flight in self.flights:
@@ -201,8 +201,17 @@ def gannt(model):
     for flight in model.flights:
         tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.start_date)), y=model.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.start_airport), showarrow=False, font=dict(color='black')))
         tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date)), y=model.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.end_airport), showarrow=False, font=dict(color='black')))
-    #fig['layout']['annotations'] = [dict(x='2019-11-20',y=1,text="This is a label", showarrow=False, font=dict(color='white'))]
     fig['layout']['annotations'] = tuple(tmp)
+    # we also show the TAT
+    for flight in model.flights:
+        fig.add_trace(
+            go.Scatter(
+                x=[time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date)), time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date + flight.tat * 60))],
+                y=[model.nb_aircraft - flight.assigned_aircraft - 1, model.nb_aircraft - flight.assigned_aircraft - 1],
+                mode="lines",
+                line=go.scatter.Line(color="black"),
+                showlegend=False)
+        )
     fig.show()
 
 def asp_input_fact(output_file, model):
