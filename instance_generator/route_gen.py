@@ -8,6 +8,7 @@ import plotly.figure_factory as ff
 import datetime
 import plotly.graph_objects as go
 import math
+import models
 
 def injective_airport(start, end):
     """ Injective function to map [0, nb_airport] -> [0, nb_airport]\start """ 
@@ -17,71 +18,6 @@ def injective_airport(start, end):
 
 def truncated_norm(minimum, maximum, mean, sd):
     return truncnorm(a = (minimum - mean) / sd, b = (maximum - mean) / sd, scale=sd, loc=mean).rvs(size=1).round().astype(int)[0]
-
-class Model(object):
-    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft):
-        self.nb_aircraft = nb_aircraft
-        self.nb_airport = nb_airport
-        self.flights = fligths
-        self.first_fligth_aircraft = first_fligth_aircraft
-        # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
-        self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
-        for flight in self.flights:
-           self.flight_of_aircraft[flight.assigned_aircraft].append(flight)
-
-    def __repr__(self):
-        result = ""
-        result += "aircraft(1..{}).\n".format(self.nb_aircraft)
-        result += "airport(1..{}).\n".format(self.nb_airport)
-        result += "flight(1..{}).\n".format(len(self.flights))
-        # we now print for each aircraft is first flight
-        for aircraft in range(len(self.first_fligth_aircraft)):
-            flight = self.first_fligth_aircraft[aircraft]
-            # +1 because we count aircraft starting from 1 and not 0
-            result += "first({}, {}). ".format(flight.id, aircraft + 1)
-        result += "\n"
-        # we add the airport of departure
-        for flight in self.flights:
-            result += "airport_start({}, {}). ".format(flight.id, flight.start_airport)
-        result += "\n"
-        # we add the airport of destination
-        for flight in self.flights:
-            result += "airport_end({}, {}). ".format(flight.id, flight.end_airport)
-        result += "\n"
-        # we add the start date of the flight
-        for flight in self.flights:
-            result += "start({}, {}). ".format(flight.id, flight.start_date)
-        result += "\n"
-        # we add the end date of the flight
-        for flight in self.flights:
-            result += "end({}, {}). ".format(flight.id, flight.end_date)
-        result += "\n"
-        # we add the tat for each flight
-        for flight in self.flights:
-            result += "tat({}, {}). ".format(flight.id, flight.tat)
-        result += "\n"
-        # now we will add the solution as a comment
-        result += "\n"
-        # way more conveniant to check if we get one line per aircraft
-        result += "%* One possible solution: \n"
-        for aircraft in range(len(self.flight_of_aircraft)):
-            result += "For aircraft {}\n".format(aircraft + 1)
-            for flight in self.flight_of_aircraft[aircraft]:
-                result += "assign({}, {}). ".format(flight.id, aircraft + 1)
-            result += "\n\n"
-        result += "*%\n"
-        return result
-
-class Flight(object):
-     def __init__(self, id, start_date, length_fly, start_airport, end_airport, assigned_aircraft, tat):
-         self.id = id
-         self.start_date = start_date
-         self.length_fly = length_fly
-         self.end_date = start_date + length_fly
-         self.start_airport = start_airport
-         self.end_airport = end_airport
-         self.assigned_aircraft = assigned_aircraft
-         self.tat = tat
 
 def main(argv):
     print("This is used to generate data for the route algorithm")
@@ -176,7 +112,7 @@ def main(argv):
                     tat = previously_created.tat
             # we start the index at 1
             id = len(flights) + 1
-            flight_object = Flight(id, start_date, length_fly, start_airport, end_airport, aircraft, tat)
+            flight_object = models.Flight(id, start_date, length_fly, start_airport, end_airport, aircraft, tat)
             # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
             if first_flight :
                 first_fligth_aircraft[aircraft] = flight_object
@@ -184,40 +120,40 @@ def main(argv):
             first_flight = False
             if not (start_airport, end_airport) in flights_created:
                 flights_created[(start_airport, end_airport)] = flight_object
-    model = Model(nb_aircraft, nb_airport, flights, first_fligth_aircraft)
-    gannt(model)
-    asp_input_fact("test.lp", model)
+    solution = models.Solution(nb_aircraft, nb_airport, flights, first_fligth_aircraft)
+    gannt(solution)
+    asp_input_fact("test.lp", solution)
 
-def gannt(model):
+def gannt(solution):
     data = []
-    for flight in model.flights:
+    for flight in solution.flights:
         flight_data = ["Aircraft " + str(flight.assigned_aircraft), datetime.datetime.fromtimestamp(flight.start_date), datetime.datetime.fromtimestamp(flight.end_date), str(flight.start_airport) + " - " + str(flight.end_airport), flight.tat]
         data.append(flight_data)
     df = pd.DataFrame(data, columns=["Task", "Start", "Finish", "Resource", "Complete"])
-    colors = [tuple([random.random() for i in range(3)]) for i in range(model.nb_airport)]
+    colors = [tuple([random.random() for i in range(3)]) for i in range(solution.nb_airport)]
     fig = ff.create_gantt(df,colors=colors, group_tasks=True)
     # we need to create label for displaying the start and end airport
     tmp = []
-    for flight in model.flights:
-        tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.start_date)), y=model.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.start_airport), showarrow=False, font=dict(color='black')))
-        tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date)), y=model.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.end_airport), showarrow=False, font=dict(color='black')))
+    for flight in solution.flights:
+        tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.start_date)), y=solution.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.start_airport), showarrow=False, font=dict(color='black')))
+        tmp.append(dict(x=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date)), y=solution.nb_aircraft - flight.assigned_aircraft - 1, text=str(flight.end_airport), showarrow=False, font=dict(color='black')))
     fig['layout']['annotations'] = tuple(tmp)
     # we also show the TAT
-    for flight in model.flights:
+    for flight in solution.flights:
         fig.add_trace(
             go.Scatter(
                 x=[time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date)), time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(flight.end_date + flight.tat * 60))],
-                y=[model.nb_aircraft - flight.assigned_aircraft - 1, model.nb_aircraft - flight.assigned_aircraft - 1],
+                y=[solution.nb_aircraft - flight.assigned_aircraft - 1, solution.nb_aircraft - flight.assigned_aircraft - 1],
                 mode="lines",
                 line=go.scatter.Line(color="black"),
                 showlegend=False)
         )
     fig.show()
 
-def asp_input_fact(output_file, model):
+def asp_input_fact(output_file, solution):
     file = open(output_file, "w")
-    print(repr(model))
-    file.write(repr(model))
+    print(repr(solution))
+    file.write(repr(solution))
 
 
 if __name__== "__main__":
