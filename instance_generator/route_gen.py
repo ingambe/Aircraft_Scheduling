@@ -24,6 +24,80 @@ def truncated_norm(minimum, maximum, mean, sd):
     ''' Used to general random number with a normal distribution '''
     return truncnorm(a = (minimum - mean) / sd, b = (maximum - mean) / sd, scale=sd, loc=mean).rvs(size=1).round().astype(int)[0]
 
+def instance_generator(nb_aircraft = 20,
+        nb_airport = 30,
+        mean_length_flight = 80,
+        var_length_flight = 15,
+        min_length_flight = 30,
+        max_length_flight = 150,
+        mean_flight_per_aicraft = 300,
+        var_flight_per_aicraft = 100,
+        min_flight_per_aicraft = 200,
+        max_flight_per_aicraft = 400,
+        mean_tat = 45,
+        var_tat = 10,
+        min_tat = 30,
+        max_tat = 60,
+        mean_on_ground = 3000,
+        var_on_ground = 1000,
+        min_on_ground = 0,
+        max_on_ground = 6000):
+    
+    # all the flight created and allocated to an aircraft
+    flights = []
+    
+    # represent all unique flight created (i.e. starting from airport A to airport B)
+    flights_created = dict()
+
+    # represent the first fligth of each aircraft in the gant (first before now)
+    first_fligth_aircraft = [None for i in range(nb_aircraft)]
+
+    time_now = time.time()
+
+    flights_per_aircraft = [0 for i in range(nb_aircraft)]
+    for aircraft in range(nb_aircraft):
+        flights_per_aircraft[aircraft] = truncated_norm(min_flight_per_aicraft, max_flight_per_aicraft, mean_flight_per_aicraft, var_flight_per_aicraft)
+        print("For aircraft {} we have {} flights".format(aircraft, flights_per_aircraft[aircraft]))
+        first_flight = True
+        for i in range(flights_per_aircraft[aircraft]):
+            # we define a length of the flight, multiply by 60 to convert from minute to second (EPOCH)
+            length_fly = truncated_norm(min_length_flight, max_length_flight, mean_length_flight, var_length_flight) * 60
+            # we compute the tat
+            tat = truncated_norm(min_tat, max_tat, mean_tat, var_tat)
+
+            # for the first flight, the start airport is to be choosed between [0, nb_airport]
+            # also, as we don't have previous flight, we need to determine a start date
+            if first_flight:
+                start_airport = truncated_norm(1, nb_airport, math.ceil(nb_airport / 2), math.ceil(nb_airport / 4))
+                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, math.ceil((nb_airport - 1) / 2), math.ceil((nb_airport - 1) / 4)))
+                # multiply by 60 to convert from minute to second (epoch is in second)
+                # this allow to have a normal distribution between the flight end a time now and the flight start at time now
+                start_date = truncated_norm(time_now - length_fly, time_now + length_fly, time_now, time_now / 4)
+            else:
+                # we recover the previous fligth (last added)
+                previous = flights[-1]
+                start_airport = previous.end_airport
+                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
+                minimal_legal_start = previous.end_date + (previous.tat * 60)
+                start_date = minimal_legal_start + truncated_norm(min_on_ground, max_on_ground, mean_on_ground, var_on_ground)
+                # if we already got a flight starting from A to B, we get back the length of fly and TAT
+                if (start_airport, end_airport) in flights_created:
+                    previously_created = flights_created[(start_airport, end_airport)]
+                    length_fly = previously_created.length_fly
+                    tat = previously_created.tat
+            # we start the index at 1
+            id = len(flights) + 1
+            flight_object = models.Flight(id, start_date, length_fly, start_airport, end_airport, aircraft, tat)
+            # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
+            if first_flight :
+                first_fligth_aircraft[aircraft] = flight_object
+            flights.append(flight_object)
+            first_flight = False
+            if not (start_airport, end_airport) in flights_created:
+                flights_created[(start_airport, end_airport)] = flight_object
+    solution = models.Solution(nb_aircraft, nb_airport, flights, first_fligth_aircraft)
+    return solution
+
 def main():
     parser = argparse.ArgumentParser(description='Generate instance for the routing algorithm')
     parser.add_argument('--aicraft', type=int, help="the number of aircrafts in the outputed instance")
@@ -52,6 +126,8 @@ def main():
 
     parser.add_argument('--default', action='store_true', help="This generate instancies with default value for the previously listed arguments")
 
+    parser.add_argument('--gannt', action='store_true', help="This will output the gannt")
+
     args = parser.parse_args()
 
     output_file = "instance"
@@ -60,25 +136,7 @@ def main():
 
     # if the user asked for default value
     if args.default:
-        print("You choosed to use default values")
-        nb_aircraft = 2
-        nb_airport = 3
-        mean_length_flight = 80
-        var_length_flight = 15
-        min_length_flight = 30
-        max_length_flight = 150
-        mean_flight_per_aicraft = 3
-        var_flight_per_aicraft = 1
-        min_flight_per_aicraft = 2
-        max_flight_per_aicraft = 4
-        mean_tat = 45
-        var_tat = 10
-        min_tat = 30
-        max_tat = 60
-        mean_on_ground = 3000
-        var_on_ground = 1000
-        min_on_ground = 0
-        max_on_ground = 6000
+        solution = instance_generator()
     else:
         # we ask when we don't have the value specified by the input
         if args.aicraft != None:
@@ -135,61 +193,27 @@ def main():
             var_on_ground = int(input("Variance time on ground between two flights (in minutes) : "))
             min_on_ground = int(input("Min time on ground between two flights (in minutes) : "))
             max_on_ground = int(input("Max time on ground between two flights (in minutes) : "))
+        solution = instance_generator(nb_aircraft,
+        nb_airport,
+        mean_length_flight,
+        var_length_flight,
+        min_length_flight,
+        max_length_flight,
+        mean_flight_per_aicraft,
+        var_flight_per_aicraft,
+        min_flight_per_aicraft,
+        max_flight_per_aicraft,
+        mean_tat,
+        var_tat,
+        min_tat,
+        max_tat,
+        mean_on_ground,
+        var_on_ground,
+        min_on_ground,
+        max_on_ground)
 
-    # all the flight created and allocated to an aircraft
-    flights = []
-    
-    # represent all unique flight created (i.e. starting from airport A to airport B)
-    flights_created = dict()
-
-    # represent the first fligth of each aircraft in the gant (first before now)
-    first_fligth_aircraft = [None for i in range(nb_aircraft)]
-
-    time_now = time.time()
-
-    flights_per_aircraft = [0 for i in range(nb_aircraft)]
-    for aircraft in range(nb_aircraft):
-        flights_per_aircraft[aircraft] = truncated_norm(min_flight_per_aicraft, max_flight_per_aicraft, mean_flight_per_aicraft, var_flight_per_aicraft)
-        print("For aircraft {} we have {} flights".format(aircraft, flights_per_aircraft[aircraft]))
-        first_flight = True
-        for i in range(flights_per_aircraft[aircraft]):
-            # we define a length of the flight, multiply by 60 to convert from minute to second (EPOCH)
-            length_fly = truncated_norm(min_length_flight, max_length_flight, mean_length_flight, var_length_flight) * 60
-            # we compute the tat
-            tat = truncated_norm(min_tat, max_tat, mean_tat, var_tat)
-
-            # for the first flight, the start airport is to be choosed between [0, nb_airport]
-            # also, as we don't have previous flight, we need to determine a start date
-            if first_flight:
-                start_airport = truncated_norm(1, nb_airport, math.ceil(nb_airport / 2), math.ceil(nb_airport / 4))
-                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, math.ceil((nb_airport - 1) / 2), math.ceil((nb_airport - 1) / 4)))
-                # multiply by 60 to convert from minute to second (epoch is in second)
-                # this allow to have a normal distribution between the flight end a time now and the flight start at time now
-                start_date = truncated_norm(time_now - length_fly, time_now + length_fly, time_now, time_now / 4)
-            else:
-                # we recover the previous fligth (last added)
-                previous = flights[-1]
-                start_airport = previous.end_airport
-                end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2, (nb_airport - 1) / 4))
-                minimal_legal_start = previous.end_date + (previous.tat * 60)
-                start_date = minimal_legal_start + truncated_norm(min_on_ground, max_on_ground, mean_on_ground, var_on_ground)
-                # if we already got a flight starting from A to B, we get back the length of fly and TAT
-                if (start_airport, end_airport) in flights_created:
-                    previously_created = flights_created[(start_airport, end_airport)]
-                    length_fly = previously_created.length_fly
-                    tat = previously_created.tat
-            # we start the index at 1
-            id = len(flights) + 1
-            flight_object = models.Flight(id, start_date, length_fly, start_airport, end_airport, aircraft, tat)
-            # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
-            if first_flight :
-                first_fligth_aircraft[aircraft] = flight_object
-            flights.append(flight_object)
-            first_flight = False
-            if not (start_airport, end_airport) in flights_created:
-                flights_created[(start_airport, end_airport)] = flight_object
-    solution = models.Solution(nb_aircraft, nb_airport, flights, first_fligth_aircraft)
-    gannt(solution)
+    if args.gannt:
+        gannt(solution)
     asp_input_fact(output_file, solution)
 
 def gannt(solution):
