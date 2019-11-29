@@ -42,6 +42,7 @@ def instance_generator(nb_aircraft = 20,
         var_on_ground = 1000,
         min_on_ground = 0,
         max_on_ground = 6000):
+    ''' This function generate a Solution model '''
     
     # all the flight created and allocated to an aircraft
     flights = []
@@ -214,6 +215,7 @@ def main():
 
     if args.gannt:
         gannt(solution)
+        
     asp_input_fact(output_file, solution)
 
 def gannt(solution):
