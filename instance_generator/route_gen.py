@@ -13,6 +13,8 @@ import plotly.graph_objects as go
 import math
 import models
 import argparse
+from default_parameters import *
+
 
 def injective_airport(start, end):
     ''' Injective function to map [0, nb_airport] -> [0, nb_airport]\start '''
@@ -24,24 +26,25 @@ def truncated_norm(minimum, maximum, mean, sd):
     ''' Used to general random number with a normal distribution '''
     return truncnorm(a = (minimum - mean) / sd, b = (maximum - mean) / sd, scale=sd, loc=mean).rvs(size=1).round().astype(int)[0]
 
-def instance_generator(nb_aircraft = 20,
-        nb_airport = 30,
-        mean_length_flight = 80,
-        var_length_flight = 15,
-        min_length_flight = 30,
-        max_length_flight = 150,
-        mean_flight_per_aicraft = 300,
-        var_flight_per_aicraft = 100,
-        min_flight_per_aicraft = 200,
-        max_flight_per_aicraft = 400,
-        mean_tat = 45,
-        var_tat = 10,
-        min_tat = 30,
-        max_tat = 60,
-        mean_on_ground = 3000,
-        var_on_ground = 1000,
-        min_on_ground = 0,
-        max_on_ground = 6000):
+def instance_generator(nb_aircraft = default_nb_aircraft,
+        nb_airport = default_nb_airport,
+        mean_length_flight = default_mean_length_flight,
+        var_length_flight = default_var_length_flight,
+        min_length_flight = default_min_length_flight,
+        max_length_flight = default_max_length_flight,
+        mean_flight_per_aicraft = default_mean_flight_per_aicraft,
+        var_flight_per_aicraft = default_var_flight_per_aicraft,
+        min_flight_per_aicraft = default_min_flight_per_aicraft,
+        max_flight_per_aicraft = default_max_flight_per_aicraft,
+        mean_tat = default_mean_tat,
+        var_tat = default_var_tat,
+        min_tat = default_min_tat,
+        max_tat = default_max_tat,
+        mean_on_ground = default_mean_on_ground,
+        var_on_ground = default_var_on_ground,
+        min_on_ground = default_min_on_ground,
+        max_on_ground = default_max_on_ground,
+        verbose = False):
     ''' This function generate a Solution model '''
     
     # all the flight created and allocated to an aircraft
@@ -58,7 +61,8 @@ def instance_generator(nb_aircraft = 20,
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
     for aircraft in range(nb_aircraft):
         flights_per_aircraft[aircraft] = truncated_norm(min_flight_per_aicraft, max_flight_per_aicraft, mean_flight_per_aicraft, var_flight_per_aicraft)
-        print("For aircraft {} we have {} flights".format(aircraft, flights_per_aircraft[aircraft]))
+        if verbose:
+            print("For aircraft {} we have {} flights".format(aircraft, flights_per_aircraft[aircraft]))
         first_flight = True
         for i in range(flights_per_aircraft[aircraft]):
             # we define a length of the flight, multiply by 60 to convert from minute to second (EPOCH)
@@ -69,6 +73,8 @@ def instance_generator(nb_aircraft = 20,
             # for the first flight, the start airport is to be choosed between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
             if first_flight:
+                if verbose:
+                        print("First flight of aircraft {}, is {} - {}".format(i, start_airport, end_airport))
                 start_airport = truncated_norm(1, nb_airport, math.ceil(nb_airport / 2), math.ceil(nb_airport / 4))
                 end_airport = injective_airport(start_airport, truncated_norm(1, nb_airport - 1, math.ceil((nb_airport - 1) / 2), math.ceil((nb_airport - 1) / 4)))
                 # multiply by 60 to convert from minute to second (epoch is in second)
@@ -83,6 +89,8 @@ def instance_generator(nb_aircraft = 20,
                 start_date = minimal_legal_start + truncated_norm(min_on_ground, max_on_ground, mean_on_ground, var_on_ground)
                 # if we already got a flight starting from A to B, we get back the length of fly and TAT
                 if (start_airport, end_airport) in flights_created:
+                    if verbose:
+                        print("The flight {} - {} has already been added to the database, we retrive the info".format(start_airport, end_airport))
                     previously_created = flights_created[(start_airport, end_airport)]
                     length_fly = previously_created.length_fly
                     tat = previously_created.tat
@@ -129,6 +137,8 @@ def main():
 
     parser.add_argument('--gannt', action='store_true', help="This will output the gannt")
 
+    parser.add_argument('--verbose', action='store_true', help="To get more information while the data are generated")
+
     args = parser.parse_args()
 
     output_file = "instance"
@@ -137,7 +147,7 @@ def main():
 
     # if the user asked for default value
     if args.default:
-        solution = instance_generator()
+        solution = instance_generator(verbose = args.verbose)
     else:
         # we ask when we don't have the value specified by the input
         if args.aicraft != None:
@@ -171,25 +181,25 @@ def main():
             min_flight_per_aicraft = int(input("Min flight per aicraft : "))
             max_flight_per_aicraft = int(input("Max flight per aicraft : "))
         # information about TAT (Turn Around Time) between two flights
-        print("TAT (Turn around time) : the minimal legal time between two flights")
         if args.meanTat != None and args.varTat != None and args.minTat != None and args.maxTat != None:
             mean_tat = args.meanTat
             var_tat = args.varTat
             min_tat = args.minTat
             max_tat = args.maxTat
         else:
+            print("TAT (Turn around time) : the minimal legal time between two flights")
             mean_tat = int(input("Mean TAT between two flights : "))
             var_tat = int(input("Variance TAT between two flights : "))
             min_tat = int(input("Min TAT between two flights : "))
             max_tat = int(input("Max TAT between two flights : "))
         # get the maximum time on ground between two flight (after TAT)
-        print("Time on ground : the time after minimal tat between flights")
         if args.meanGroundTime != None and args.varGroundTime != None and args.minGroundTime != None and args.maxGroundTime != None:
             mean_on_ground = args.meanGroundTime
             var_on_ground = args.varGroundTime
             min_on_ground = args.minGroundTime
             max_on_ground = args.maxGroundTime
         else:
+            print("Time on ground : the time after minimal tat between flights")
             mean_on_ground = int(input("Mean time on ground between two flights (in minutes) : "))
             var_on_ground = int(input("Variance time on ground between two flights (in minutes) : "))
             min_on_ground = int(input("Min time on ground between two flights (in minutes) : "))
@@ -211,7 +221,8 @@ def main():
         mean_on_ground,
         var_on_ground,
         min_on_ground,
-        max_on_ground)
+        max_on_ground,
+        args.verbose)
 
     if args.gannt:
         gannt(solution)
