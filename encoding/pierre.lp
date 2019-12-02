@@ -6,13 +6,15 @@ compatible(V1, V2) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), tat(V1
 % we retrive the initial allocation
 assign(V, A) :- first(V, A).
 
-% and for the other one we assign only one aircraft
-{assign(V,A) : aircraft(A)} = 1 :- flight(V).
+% we assign the same aircraft in the route
+assign(V2, A) :- assign(V1, A), aircraft(A), route(V1, V2), not first(V2, A).
+
 
 {route(V1, V2) : compatible(V1, V2)} = 1 :- first(V1, _).
 {route(V1, V2) : compatible(V1, V2)} = 1 :- flight(V2), not first(V2, _).
 
 % same aircraft assigned during the whole route
-:- route(V1, V2), assign(V1, A1), assign(V2, A2), A1 != A2.
+:- route(V1, V2), assign(V1, A), not assign(V2, A).
+:- route(V1, V2), assign(V2, A), not assign(V1, A).
 
 #show assign/2.
