@@ -1,14 +1,17 @@
 % Add minimal tat to end times of flights
 
 end_tat(V,T+60*M) :- flight(V), end(V,T), tat(V,M).
+end_tat(V,A,T)    :- airport_end(V,A), end_tat(V,T).
 
-% Order start times of flights and map end times to them
+% Order (start) times of flights and map end times to (later) start times
 
 first(V) :- flight(V), first(V,P).
 route(V) :- flight(V), not first(V).
 
-time(s,A,T) :- start(V,T), airport_start(V,A), route(V).
-time(e,A,T) :- end_tat(V,T), airport_end(V,A).
+start(V,A,T) :- airport_start(V,A), start(V,T), route(V).
+
+time(s,A,T) :- start(V,A,T).
+time(e,A,T) :- end_tat(V,A,T).
 
 time_sort(@insert(t,T)) :- time(X,A,T).
 
@@ -19,70 +22,61 @@ time_next(T1,T2) :- time_index(T1,I), time_index(T2,I+1).
 end_aux(A,T,T)   :- time(e,A,T).
 end_aux(A,T1,T2) :- end_aux(A,T1,T), time_next(T,T2), not time(s,A,T).
 
-end_map(A,T1,T2) :- end_aux(A,T1,T2), time(s,A,T2).
+end_next(A,T1,T2) :- end_aux(A,T1,T2), time(s,A,T2).
+end_next(A)       :- end_next(A,T1,T2).
+end_next          :- end_next(A).
 
-start_time(A,T2) :- end_map(A,T1,T2).
-start_time(A,T2) :- start_aux(A,T1,T2), time(s,A,T2).
+end(V,A,T2) :- end_tat(V,A,T1), end_next(A,T1,T2).
 
-start_aux(A,T1,T2) :- start_time(A,T1), time_next(T1,T2).
+start_last(A,L) :- end_next(A), L = #max{T : time(s,A,T)}.
+start_last(L)   :- end_next, L = #max{T : start_last(A,T)}.
+
+start_time(A,T2) :- end_next(A,T1,T2).
+start_time(A,T2) :- start_next(A,T1,T2).
+
+start_next(A,T1,T2) :- start_aux(A,T1,T2), time(s,A,T2).
+
+start_aux(A,T1,T2) :- start_time(A,T1), time_next(T1,T2), not start_last(A,T1).
 start_aux(A,T1,T2) :- start_aux(A,T1,T), time_next(T,T2), not time(s,A,T).
 
-% start_time(T2) :- end_map(A,T1,T2).
+start_time(T) :- start_time(A,T).
 
+start_aux(T1,T2) :- start_time(T1), time_next(T1,T2), not start_last(T1).
+start_aux(T1,T2) :- start_aux(T1,T), time_next(T,T2), not start_time(T).
 
-
-%*
-start_time(A,T2) :- end_map(A,T1,T2).
-start_time(A,T2) :- airport_next(A,T1,T2), time(s,A,T2).
-
-start_aux(A,T1,T2) :- start_time(A,T1), time_next(T1,T2).
-start_aux(A,T1,T2) :- airport_next(A,T1,T), time_next(T,T2), not time(s,A,T).
-
-start_time(T) :- airport_time(A,T).
-
-% start_next(T1,T2) :- start_time(T1), time_next(T1,T2).
-% start_
-
-init(P,A,T2) :- first(V,P), end_tat(V,T1), airport_end(V,A), airport_keep(A,T1,T2).
-*%
-
-
-%*
-time(A,T) :- end_tat(V,T), airport_end(V,A).
-
-
-next(A,T1,T2) :- time(A,T1), time(A,T2), T1 < T2,
-                 T <= T1 : time(A,T), T < T2.
-*%
-
-
-%*
-time(@insert(A,T)) :- end_tat(V,T), airport_end(V,A).
-time(@insert(A,T)) :- start(V,T), airport_start(V,A), route(V).
-
-value(A,T,I) :- time(A), (T,I) = @order(A).
-value(T)     :- value(A,T,I).
-
-next(A,T1,T2) :- value(A,T1,I), value(A,T2,I+1).
+start_next(T1,T2) :- start_aux(T1,T2), start_time(T2).
 
 % Generate routings for the aircrafts
+%*
+{assign(V,P) : first(F,P)} = 1 :- route(V).
 
-at(P,A,T1) :- end_tat(V,T1), airport_end(V,A), first(V,P).
-at(P,A,T1) :- end_tat(V,T1), airport_end(V,A), assign(V,P).
-at(P,A,T2) :- at(P,A,T1), next(A,T1,T2),
-              not assign(V,P) : start(V,T1), airport_start(V,A).
+:- first(F,P), start_time(A,T), #count{V : start(V,A,T), assign(V,P)} > 1.
 
-{assign(V,P) : start(V,T), airport_start(V,A), route(V)} 1 :- at(P,A,T).
+at(P,A,T)  :- end(V,A,T), first(V,P).
+at(P,A,T)  :- end(V,A,T), assign(V,P).
+% at(P,A,T2) :- at(P,A,T1), start_next(A,T1,T2), not assign(V,P) : start(V,A,T1).
+at(P,A,T2) :- at(P,A,T1), start_next(T1,T2), not start_last(A,T1),
+              not assign(V,P) : start(V,A,T1).
+
+:- start(V,A,T), assign(V,P), not at(P,A,T).
+*%
+
+{at(P,A,T)} :- end(V,A,T), first(V,P).
+{at(P,A,T)} :- end(V,A,T), assign(V,P).
+% {at(P,A,T2) : start_next(T1,T2), not start_last(A,T1);
+%  assign(V,P) : start(V,A,T1)} = 1 :- at(P,A,T1).
+{at(P,A,T2) : start_next(A,T1,T2);
+ assign(V,P) : start(V,A,T1)} = 1 :- at(P,A,T1).
+
+:- first(V,P), start_time(T), #count{A : at(P,A,T)} > 1.
 
 :- route(V), #count{P : assign(V,P)} != 1.
-
-:- first(V,P), value(T), #count{A : at(P,A,T)} > 1.
 
 % Output assignment of flights to aircrafts
 
 #show assign/2.
-#show assign(V,P) : first(V,P).
-*%
+#show assign(V,P) : flight(V), first(V,P).
+
 % Term sorting by means of script
 
 #script(lua)
