@@ -10,7 +10,6 @@ your local machine for development and testing purposes. See deployment
 for notes on how to deploy the project on a live system.
 
 ### Prerequisites
-~~~~~~~~~~~~~
 
 Which things you need to install the software and how to install them
 
@@ -19,7 +18,6 @@ Which things you need to install the software and how to install them
 * [Pip](https://pip.pypa.io/en/stable/installing/) Already included in the latest python versions
 
 ### Installing
-~~~~~~~~~~
 
 First, you need to clone this repository
 
@@ -44,7 +42,6 @@ pip install -r requirements.txt
 ```
 
 ## Generate instances
------------------
 
 The script file [route_gen.py](https://github.com/ingambe/Aircraft_Scheduling/blob/master/instance_generator/route_gen.py) allows you to generate instances.
 If you run it without any arguments, it will use the [default one](https://github.com/ingambe/Aircraft_Scheduling/blob/master/instance_generator/default_parameters.py).
@@ -52,17 +49,14 @@ The `--gannt` argument generate and display a gannt of the instances:
 ![example of generated gannt](gannt.png)
 
 ## Running the tests
------------------
 
 TODO
 
-Authors
--------
+## Authors
 
 -  **Pierre Tassel**
 -  **Martin Gebser**
 
-License
--------
+## License
 
 MIT License
