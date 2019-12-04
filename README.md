@@ -3,7 +3,6 @@
 This is a Proof of Concept for an ASP formulation of the Aircraft Scheduling problem.
 
 ## Getting Started
----------------
 
 These instructions will get you a copy of the project up and running on
 your local machine for development and testing purposes. See deployment
@@ -46,7 +45,9 @@ pip install -r requirements.txt
 The script file [route_gen.py](https://github.com/ingambe/Aircraft_Scheduling/blob/master/instance_generator/route_gen.py) allows you to generate instances.
 If you run it without any arguments, it will use the [default one](https://github.com/ingambe/Aircraft_Scheduling/blob/master/instance_generator/default_parameters.py).
 The `--gannt` argument generate and display a gannt of the instances:
-![example of generated gannt](gannt.png)
+<p align="center"> 
+<img src="gannt.png" alt="example of generated gannt">
+</p>
 
 ## Running the tests
 
