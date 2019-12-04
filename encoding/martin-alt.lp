@@ -4,32 +4,48 @@ end_tat(V,T+60*M) :- flight(V), end(V,T), tat(V,M).
 
 % Order start times of flights and map end times to them
 
-first(V) :- first(V,P).
+first(V) :- flight(V), first(V,P).
 route(V) :- flight(V), not first(V).
 
 time(s,A,T) :- start(V,T), airport_start(V,A), route(V).
 time(e,A,T) :- end_tat(V,T), airport_end(V,A).
 
-time(A,T) :- time(X,A,T).
-time(T)   :- time(A,T).
-
-time_sort(@insert(t,T)) :- time(T).
+time_sort(@insert(t,T)) :- time(X,A,T).
 
 time_index(T,I) :- time_sort(O), (T,I) = @order(O).
 
 time_next(T1,T2) :- time_index(T1,I), time_index(T2,I+1).
 
-time_skip(A,T,T)   :- time(e,A,T), not time(s,A,T).
-time_skip(A,T1,T2) :- time_skip(A,T1,T), time_next(T,T2), not time(s,A,T2).
+end_aux(A,T,T)   :- time(e,A,T).
+end_aux(A,T1,T2) :- end_aux(A,T1,T), time_next(T,T2), not time(s,A,T).
 
-time_keep(A,T,T)   :- time(e,A,T), time(s,A,T).
-time_keep(A,T1,T2) :- time_skip(A,T1,T), time_next(T,T2), time(s,A,T2).
+end_map(A,T1,T2) :- end_aux(A,T1,T2), time(s,A,T2).
 
-airport_time(A,T2) :- time_keep(A,T1,T2).
-airport_time(A,T2) :- airport_next(A,T1,T2), time(s,A,T2).
+start_time(A,T2) :- end_map(A,T1,T2).
+start_time(A,T2) :- start_aux(A,T1,T2), time(s,A,T2).
 
-airport_next(A,T1,T2) :- airport_time(A,T1), time_next(T1,T2).
-airport_next(A,T1,T2) :- airport_next(A,T1,T), time_next(T,T2), not time(s,A,T).
+start_aux(A,T1,T2) :- start_time(A,T1), time_next(T1,T2).
+start_aux(A,T1,T2) :- start_aux(A,T1,T), time_next(T,T2), not time(s,A,T).
+
+% start_time(T2) :- end_map(A,T1,T2).
+
+
+
+%*
+start_time(A,T2) :- end_map(A,T1,T2).
+start_time(A,T2) :- airport_next(A,T1,T2), time(s,A,T2).
+
+start_aux(A,T1,T2) :- start_time(A,T1), time_next(T1,T2).
+start_aux(A,T1,T2) :- airport_next(A,T1,T), time_next(T,T2), not time(s,A,T).
+
+start_time(T) :- airport_time(A,T).
+
+% start_next(T1,T2) :- start_time(T1), time_next(T1,T2).
+% start_
+
+init(P,A,T2) :- first(V,P), end_tat(V,T1), airport_end(V,A), airport_keep(A,T1,T2).
+*%
+
 
 %*
 time(A,T) :- end_tat(V,T), airport_end(V,A).
