@@ -14,7 +14,7 @@ Which things you need to install the software and how to install them
 
 
 * [Python3](https://www.python.org/downloads/)
-* [Pip](https://pip.pypa.io/en/stable/installing/) Already included in the latest python versions
+* [Pip](https://pip.pypa.io/en/stable/installing/)          Already included in the latest python versions
 
 ### Installing
 
