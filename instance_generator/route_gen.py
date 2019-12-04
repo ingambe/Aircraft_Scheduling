@@ -109,7 +109,7 @@ def instance_generator(nb_aircraft = default_nb_aircraft,
 
 def main():
     parser = argparse.ArgumentParser(description='Generate instance for the routing algorithm')
-    parser.add_argument('--aicraft', type=int, help="the number of aircrafts in the outputed instance")
+    parser.add_argument('--aircraft', type=int, help="the number of aircrafts in the outputed instance")
     parser.add_argument('--airport', type=int, help="the number of airports in the outputed instance")
     parser.add_argument('--meanFlightLength', type=int, help="Average length of the flights (in minutes)")
     parser.add_argument('--varFlightLength', type=int, help="Variance of the length of the flights (in minutes)")
@@ -150,12 +150,12 @@ def main():
         solution = instance_generator(verbose = args.verbose)
     else:
         # we ask when we don't have the value specified by the input
-        if args.aicraft != None:
-            nb_aircraft = args.aicraft
+        if args.aircraft != None:
+            nb_aircraft = args.aircraft
         else:
             nb_aircraft = int(input("Enter the number of aircrafts : "))
-        if args.aicraft != None:
-            nb_airport = args.aicraft
+        if args.airport != None:
+            nb_airport = args.airport
         else:
             nb_airport = int(input("Enter the number of airports : "))
         # information about length of flights
