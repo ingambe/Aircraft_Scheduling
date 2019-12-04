@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import argparse
 import clyngor
 
@@ -18,9 +19,13 @@ def main():
     solutions = [answer for answer in answers]
     assert len(solutions) > 0, "there is no solution"
     assert len(solutions) != 1, "there may have multiple solutions but we want just one solution"
-    print("The solution generated is correct !")
+    print("There is a solution, but is it a correct one ? Let's find out !")
     for answer in solutions:
         asp_str = ' '.join(clyngor.utils.generate_answer_set_as_str(answer, atom_end='.'))
+        test_correctness = clyngor.solve(inline = asp_str, files=[os.path.dirname(os.path.realpath(__file__)) +"/test_solution.lp", instance])
+        corrects = [correct for correct in test_correctness]
+        assert len(corrects) > 0, "the solution is incorrect !"
+        print("The solution generated is correct ! :O")
         file = open(output_file, "w+")
         file.write(asp_str)
         file.close()
