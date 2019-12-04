@@ -7,21 +7,18 @@ def main(prg):
     istop  = clingo.String("SAT")
 
     i = 0
-    step, ret = 0, None
-    while (step == 0  or (
+    ret = None
+    while (i == 0  or (
               (istop.string == "SAT"     and not ret.satisfiable) or
               (istop.string == "UNSAT"   and not ret.unsatisfiable) or 
               (istop.string == "UNKNOWN" and not ret.unknown))):
         parts = []
-        parts.append(("step", [step]))
-        if step > 0:
-            parts.append(("check", [step]))
-            prg.cleanup()
-        else:
+        parts.append(("step", [i]))
+        if i == 0:
             parts.append(("base", []))
         prg.ground(parts)
         i += 1
-        ret, step = prg.solve(), step + stepinc
+        ret = prg.solve()
 #end.
 
-#program check(t).
+#program step(t).
