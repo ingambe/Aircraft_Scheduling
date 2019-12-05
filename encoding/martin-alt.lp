@@ -60,6 +60,7 @@ at(P,A,T2) :- at(P,A,T1), start_next(A,T1,T2), not assign(V,P) : start(V,A,T1).
 
 :- start(V,A,T), assign(V,P), not at(P,A,T).
 *%
+%*
 {at(P,A,T)} :- end(V,A,T), first(V,P).
 {at(P,A,T)} :- end(V,A,T), assign(V,P).
 % {at(P,A,T2) : start_next(T1,T2), not start_last(A,T1);
@@ -75,8 +76,21 @@ violate(V)
 :~ violate(V). [1,V]
 
 #show violate/1.
+*%
 
-buggy(A,T) :- end(V,A,T), not start_time(A,T).
+atA(P,A,T) :- end(V,A,T), first(V,P).
+atA(P,A,T) :- end(V,A,T), assignA(V,P).
+% {at(P,A,T2) : start_next(T1,T2), not start_last(A,T1);
+%  assign(V,P) : start(V,A,T1)} = 1 :- at(P,A,T1).
+atA(P,A,T2) :- start_next(A,T1,T2), atA(P,A,T1).
+assignA(V,P) :- start(V,A,T1), atA(P,A,T1).
+
+atB(P,A,T) :- end(V,A,T), first(V,P).
+atB(P,A,T) :- end(V,A,T), assignB(V,P).
+atB(P,A,T2) :- start_next(T1,T2), not start_last(A,T1), atB(P,A,T1).
+assignB(V,P) :- start(V,A,T1), atB(P,A,T1).
+
+buggy :- atB(P,A,T), not atA(P,A,T), time(s,A,T).
 
 % Output assignment of flights to aircrafts
 %*
