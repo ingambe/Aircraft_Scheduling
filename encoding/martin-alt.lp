@@ -54,13 +54,12 @@ start_next(T1,T2) :- start_aux(T1,T2), start_time(T2).
 
 at(P,A,T)  :- end(V,A,T), first(V,P).
 at(P,A,T)  :- end(V,A,T), assign(V,P).
-% at(P,A,T2) :- at(P,A,T1), start_next(A,T1,T2), not assign(V,P) : start(V,A,T1).
-at(P,A,T2) :- at(P,A,T1), start_next(T1,T2), not start_last(A,T1),
-              not assign(V,P) : start(V,A,T1).
+at(P,A,T2) :- at(P,A,T1), start_next(A,T1,T2), not assign(V,P) : start(V,A,T1).
+% at(P,A,T2) :- at(P,A,T1), start_next(T1,T2), not start_last(A,T1),
+%               not assign(V,P) : start(V,A,T1).
 
 :- start(V,A,T), assign(V,P), not at(P,A,T).
 *%
-
 {at(P,A,T)} :- end(V,A,T), first(V,P).
 {at(P,A,T)} :- end(V,A,T), assign(V,P).
 % {at(P,A,T2) : start_next(T1,T2), not start_last(A,T1);
@@ -70,13 +69,20 @@ at(P,A,T2) :- at(P,A,T1), start_next(T1,T2), not start_last(A,T1),
 
 :- first(V,P), start_time(T), #count{A : at(P,A,T)} > 1.
 
+violate(V)
 :- route(V), #count{P : assign(V,P)} != 1.
 
-% Output assignment of flights to aircrafts
+:~ violate(V). [1,V]
 
+#show violate/1.
+
+buggy(A,T) :- end(V,A,T), not start_time(A,T).
+
+% Output assignment of flights to aircrafts
+%*
 #show assign/2.
 #show assign(V,P) : flight(V), first(V,P).
-
+*%
 % Term sorting by means of script
 
 #script(lua)
