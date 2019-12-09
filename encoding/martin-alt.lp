@@ -2,6 +2,8 @@
 
 #const factor = 30. % factor to multiply minimal tat with
 
+#const gap = 8000.  % time of staying at an airport must be shorter than the gap
+
 #const choice = 0.  % change to use encoding variant about assignment generation
 
 #const stay = 0.    % change to use encoding variant about staying at an airport
@@ -81,6 +83,37 @@ at(P,A,T2) :- at(P,A,T1), start_next(T1,T2), not start_last(A,T1), stay != 0,
 :- keeping(0), start_last(A,T), at(P,A,T), not assign(V,P) : start(V,A,T).
 
 :- first(V,P), start_time(T), #count{A : at(P,A,T)} > 1.
+
+% Maximum time of staying at an airport
+
+cutoff(gap)         :- gap != #sup.
+cutoff(V,A,T2,K)    :- end(V,T1), end(V,A,T2), start_last(A,T), cutoff(G),
+                       K = G+T1-T2, K <= T-T2.
+cutoff(A,T1,G,T2,K) :- cutoff(V,A,T1,G), start_next(A,T1,T2), 0 < G,
+                       K = G+T1-T2.
+cutoff(A,T1,G,T2,K) :- cutoff(A,T1,G,T,L), start_next(A,T,T2), 0 < L,
+                       K = L+T-T2.
+
+scheme(A,T1,0)         :- cutoff(V,A,T1,G), G <= 0.
+scheme(A,T1,G-K)       :- cutoff(A,T1,G,T2,K), K <= 0, stay = 0.
+scheme(A,T1,G+T4-T2-K) :- cutoff(A,T1,G,T2,K), K <= 0, stay != 0,
+                          start_next(A,T3,T2), start_next(T3,T4).
+
+remain(P,A,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), first(V,P), stay = 0.
+remain(P,A,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), assign(V,P), stay = 0.
+remain(P,A,T2,G+T1-T2) :- remain(P,A,T1,G), start_next(A,T1,T2), 0 < G,
+                          not assign(V,P) : start(V,A,T1).
+remain(P,A,T2,0)       :- remain(P,A,T1,0), start_next(A,T1,T2).
+
+:- remain(P,A,T,0), start(V,A,T), assign(V,P).
+
+remain(P,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), first(V,P), stay != 0.
+remain(P,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), assign(V,P), stay != 0.
+remain(P,T2,G+T1-T2) :- remain(P,T1,G), start_next(T1,T2), 0 < G,
+                        not assign(V,P) : start(V,T1).
+remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
+
+:- remain(P,T,0), start(V,T), assign(V,P).
 
 % Output assignment of flights to aircrafts
 
