@@ -4,6 +4,8 @@
 
 #const gap = 8000.  % time of staying at an airport must be shorter than the gap
 
+#const check = 0.   % change to use encoding variant for checking gap of staying
+
 #const choice = 0.  % change to use encoding variant about assignment generation
 
 #const stay = 0.    % change to use encoding variant about staying at an airport
@@ -87,29 +89,29 @@ at(P,A,T2) :- at(P,A,T1), start_next(T1,T2), not start_last(A,T1), stay != 0,
 % Maximum time of staying at an airport
 
 cutoff(gap)         :- gap != #sup.
-cutoff(V,A,T2,K)    :- end(V,T1), end(V,A,T2), start_last(A,T), cutoff(G),
-                       K = G+T1-T2, K <= T-T2.
+cutoff(V,A,T2,G)    :- end_tat(V,A,T1), end(V,A,T2), start_last(A,T), cutoff(K),
+                       G = K+T1-T2, G <= T-T2.
 cutoff(A,T1,G,T2,K) :- cutoff(V,A,T1,G), start_next(A,T1,T2), 0 < G,
                        K = G+T1-T2.
 cutoff(A,T1,G,T2,K) :- cutoff(A,T1,G,T,L), start_next(A,T,T2), 0 < L,
                        K = L+T-T2.
 
-scheme(A,T1,0)         :- cutoff(V,A,T1,G), G <= 0.
-scheme(A,T1,G-K)       :- cutoff(A,T1,G,T2,K), K <= 0, stay = 0.
-scheme(A,T1,G+T4-T2-K) :- cutoff(A,T1,G,T2,K), K <= 0, stay != 0,
-                          start_next(A,T3,T2), start_next(T3,T4).
+scheme(A,T1,G,0)         :- cutoff(V,A,T1,G), G <= 0.
+scheme(A,T1,G,G-K)       :- cutoff(A,T1,G,T2,K), K <= 0, check = 0.
+scheme(A,T1,G,G+T4-T2-K) :- cutoff(A,T1,G,T2,K), K <= 0, check != 0,
+                            start_next(A,T3,T2), start_next(T3,T4).
 
-remain(P,A,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), first(V,P), stay = 0.
-remain(P,A,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), assign(V,P), stay = 0.
-remain(P,A,T2,G+T1-T2) :- remain(P,A,T1,G), start_next(A,T1,T2), 0 < G,
+remain(P,A,T1,K)       :- cutoff(V,A,T1,G), scheme(A,T1,G,K), first(V,P), check = 0.
+remain(P,A,T1,K)       :- cutoff(V,A,T1,G), scheme(A,T1,G,K), assign(V,P), check = 0.
+remain(P,A,T2,K+T1-T2) :- remain(P,A,T1,K), start_next(A,T1,T2), 0 < K,
                           not assign(V,P) : start(V,A,T1).
 remain(P,A,T2,0)       :- remain(P,A,T1,0), start_next(A,T1,T2).
 
 :- remain(P,A,T,0), start(V,A,T), assign(V,P).
 
-remain(P,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), first(V,P), stay != 0.
-remain(P,T1,G)       :- cutoff(V,A,T1,K), scheme(A,T1,G), assign(V,P), stay != 0.
-remain(P,T2,G+T1-T2) :- remain(P,T1,G), start_next(T1,T2), 0 < G,
+remain(P,T1,K)       :- cutoff(V,A,T1,G), scheme(A,T1,G,K), first(V,P), check != 0.
+remain(P,T1,K)       :- cutoff(V,A,T1,G), scheme(A,T1,G,K), assign(V,P), check != 0.
+remain(P,T2,K+T1-T2) :- remain(P,T1,K), start_next(T1,T2), 0 < K,
                         not assign(V,P) : start(V,T1).
 remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
 
