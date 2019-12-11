@@ -4,11 +4,15 @@ import os
 import argparse
 import clyngor
 
+def asp_to_solution(instance, frozenset):
+    return null
+
 def main():
     parser = argparse.ArgumentParser(description='Generate the solution and test it to ensure it is correct')
     parser.add_argument('--instance', type=str, help="the path to the instance")
     parser.add_argument('--encoding', type=str, help="the path to the encoding")    
     parser.add_argument('--output_file', type=str, help="the path to the ouput file")
+    parser.add_argument('--gannt', action='store_true', help="show the gannt")
     parser.add_argument('-n', type=int, help="number of solution to get (default = 1)")
     parser.add_argument('-q', action='store_true', help="quiet mode, doesn't print the solution")
     args = parser.parse_args()
@@ -41,6 +45,8 @@ def main():
                 file = open(output_file, "w+")
                 file.write(asp_str)
                 file.close()
+                if args.gannt:
+                    solution_model = asp_to_solution(instance, answer)
             else:
                 print("The solution generated is INCORRECT ! :'(")
                 output_file = "incorrect_solution_" + i + "_" + instance.split("/")[-1]
@@ -48,9 +54,6 @@ def main():
                 file.write(asp_str)
                 file.close()
             i += 1
-
-    
-
 
 if __name__== "__main__":
       main()
