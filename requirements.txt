@@ -1,0 +1,24 @@
+Arpeggio==1.9.2
+atomicwrites==1.3.0
+attrs==19.3.0
+-e git://github.com/ingambe/clyngor.git@1c5cace390c5d3b9b57f03778c0946c1a1179419#egg=clyngor
+colorama==0.4.1
+importlib-metadata==0.23
+lark-parser==0.7.8
+more-itertools==7.2.0
+numpy==1.17.4
+packaging==19.2
+pandas==0.25.3
+plotly==4.3.0
+pluggy==0.13.1
+py==1.8.0
+pyparsing==2.4.5
+pyPEG2==2.15.2
+pytest==5.3.1
+python-dateutil==2.8.1
+pytz==2019.3
+retrying==1.3.3
+scipy==1.3.3
+six==1.13.0
+wcwidth==0.1.7
+zipp==0.6.0

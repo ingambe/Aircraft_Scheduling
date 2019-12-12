@@ -1,1 +1,0 @@
-assign(5,2). assign(6,2). assign(1,1). assign(7,1). assign(2,1). assign(4,2). assign(3,1).
