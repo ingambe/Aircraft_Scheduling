@@ -121,9 +121,9 @@ def main():
     if args.output_file != None:
         output_file =  args.output_file
     if args.all != None:
-        answers = clyngor.solve(files=[instance, encoding], wait=True)
+        answers = clyngor.solve(files=[instance, encoding])
     else:
-        answers = clyngor.solve(files=[instance, encoding], wait=True, nb_model=1)    
+        answers = clyngor.solve(files=[instance, encoding], nb_model=1)    
     answers = clyngor.solve(files=[instance, encoding])
     solutions = [answer for answer in answers]
     if len(solutions) == 0:
@@ -131,7 +131,7 @@ def main():
     print("There is a solution, but is it a correct one ? Let's find out !")
     for answer in solutions:
         asp_str = ' '.join(clyngor.utils.generate_answer_set_as_str(answer, atom_end='.'))
-        test_correctness = clyngor.solve(inline = asp_str, files=[os.path.dirname(os.path.realpath(__file__)) +"/test_solution/test_solution.lp", instance], wait=True)
+        test_correctness = clyngor.solve(inline = asp_str, files=[os.path.dirname(os.path.realpath(__file__)) +"/test_solution/test_solution.lp", instance])
         corrects = [correct for correct in test_correctness]
         if len(corrects) == 0 : 
             print("the solution is incorrect !")

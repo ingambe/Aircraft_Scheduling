@@ -50,15 +50,15 @@ def main():
             print("Encodings files {}".format(files_encoding))
             start = time.time()
             if args.all != None:
-                answers = clyngor.solve(files=files_encoding, inline=repr(instance), wait=True)
+                answers = clyngor.solve(files=files_encoding, inline=repr(instance))
             else:
-                answers = clyngor.solve(files=files_encoding, inline=repr(instance), nb_model=1, wait=True)
+                answers = clyngor.solve(files=files_encoding, inline=repr(instance), nb_model=1)
             end = time.time()
             duration = end - start
             correct_solution = True
             for answer in answers:
                 asp_str = ' '.join(clyngor.utils.generate_answer_set_as_str(answer, atom_end='.'))
-                test_correctness = clyngor.solve(inline=asp_str + repr(instance), files=["../test_solution/test_solution.lp"], wait=True)
+                test_correctness = clyngor.solve(inline=asp_str + repr(instance), files=["../test_solution/test_solution.lp"])
                 corrects = [correct for correct in test_correctness]
                 if len(corrects) == 0 : 
                     correct_solution = False
