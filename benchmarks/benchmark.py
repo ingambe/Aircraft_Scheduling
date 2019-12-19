@@ -2,11 +2,13 @@
 
 import os
 import argparse
-import clyngor
-from os.path import isfile, join
+import subprocess
+import json
+from os.path import isfile, join, basename
 import time
 import pandas as pd 
 from datetime import datetime
+import tempfile
 
 import sys
 sys.path.append(
@@ -41,32 +43,47 @@ def main():
         print("\t-{}".format(encoding))
     results = []
     for i in range(number_of_run):
-        print("Iteration {}".format(i))
+        print("Iteration {}".format(i + 1))
         result_iteration = dict()
         instance = route_gen.instance_generator()
+        instance_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+        instance_temp.write(repr(instance))
         for encoding in encodings:
             print("Encoding {}".format(encoding))
             files_encoding = ["../encoding_benchmark/" + encoding + "/" + f for f in os.listdir("../encoding_benchmark/" + encoding) if isfile(join("../encoding_benchmark/" + encoding, f))]
-            print("Encodings files {}".format(files_encoding))
             start = time.time()
-            if args.all != None:
-                answers = clyngor.solve(files=files_encoding, inline=repr(instance))
+            if args.all:
+                clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["0"] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             else:
-                answers = clyngor.solve(files=files_encoding, inline=repr(instance), nb_model=1)
+                clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (stdoutdata, stderrdata) = clingo.communicate()
             end = time.time()
             duration = end - start
-            correct_solution = True
-            for answer in answers:
-                asp_str = ' '.join(clyngor.utils.generate_answer_set_as_str(answer, atom_end='.'))
-                test_correctness = clyngor.solve(inline=asp_str + repr(instance), files=["../test_solution/test_solution.lp"])
-                corrects = [correct for correct in test_correctness]
-                if len(corrects) == 0 : 
+            clingo.wait()
+            #print("out: {}".format(stdoutdata))
+            #print("error: {}".format(stderrdata))
+            json_answers = json.loads(stdoutdata)
+            instance_temp.close()
+            correct_solution = json_answers["Result"] == "SATISFIABLE"
+            for answer in json_answers["Call"][0]["Witnesses"]:
+                # we append "" just to get the last . when we join latter
+                answer = answer["Value"] + [""]
+                answer_str = ".".join(answer)
+                answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+                answer_temp.write(answer_str)
+                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+                #print("stdoudata check : {}".format(stdoutdata_check))
+                json_check = json.loads(stdoutdata_check)
+                answer_temp.close()
+                if not json_check["Result"] == "SATISFIABLE": 
                     correct_solution = False
                     break
             if correct_solution:
                 result_iteration[encoding] = duration
             else:
-                result_iteration[encoding] = sys.maxint
+                result_iteration[encoding] = sys.maxsize
+            print("duration {}".format(duration))
         results.append(result_iteration)
     df = pd.DataFrame(results)
     now = datetime.now()
