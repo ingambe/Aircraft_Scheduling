@@ -49,7 +49,7 @@ def main():
         instance_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
         instance_temp.write(repr(instance))
         for encoding in encodings:
-            print("Encoding {}".format(encoding))
+            print("Encoding {}:".format(encoding))
             files_encoding = ["../encoding_benchmark/" + encoding + "/" + f for f in os.listdir("../encoding_benchmark/" + encoding) if isfile(join("../encoding_benchmark/" + encoding, f))]
             start = time.time()
             if args.all:
@@ -63,7 +63,6 @@ def main():
             #print("out: {}".format(stdoutdata))
             #print("error: {}".format(stderrdata))
             json_answers = json.loads(stdoutdata)
-            instance_temp.close()
             correct_solution = json_answers["Result"] == "SATISFIABLE"
             for answer in json_answers["Call"][0]["Witnesses"]:
                 # we append "" just to get the last . when we join latter
@@ -71,11 +70,12 @@ def main():
                 answer_str = ".".join(answer)
                 answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
                 answer_temp.write(answer_str)
-                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
                 #print("stdoudata check : {}".format(stdoutdata_check))
                 json_check = json.loads(stdoutdata_check)
                 answer_temp.close()
+                os.remove(answer_temp.name)
                 if not json_check["Result"] == "SATISFIABLE": 
                     correct_solution = False
                     break
@@ -83,8 +83,11 @@ def main():
                 result_iteration[encoding] = duration
             else:
                 result_iteration[encoding] = sys.maxsize
-            print("duration {}".format(duration))
+            print("\tSatisfiable {}".format(correct_solution))
+            print("\tDuration {}".format(result_iteration[encoding]))
         results.append(result_iteration)
+        instance_temp.close()
+        os.remove(instance_temp.name)
     df = pd.DataFrame(results)
     now = datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
