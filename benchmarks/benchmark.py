@@ -57,34 +57,37 @@ def main():
             else:
                 clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (stdoutdata, stderrdata) = clingo.communicate()
+            clingo.wait()
             end = time.time()
             duration = end - start
-            clingo.wait()
             #print("out: {}".format(stdoutdata))
             #print("error: {}".format(stderrdata))
             json_answers = json.loads(stdoutdata)
             correct_solution = json_answers["Result"] == "SATISFIABLE"
-            for answer in json_answers["Call"][0]["Witnesses"]:
-                # we append "" just to get the last . when we join latter
-                answer = answer["Value"] + [""]
-                answer_str = ".".join(answer)
-                answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
-                answer_temp.write(answer_str)
-                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
-                #print("stdoudata check : {}".format(stdoutdata_check))
-                json_check = json.loads(stdoutdata_check)
-                answer_temp.close()
-                os.remove(answer_temp.name)
-                if not json_check["Result"] == "SATISFIABLE": 
-                    correct_solution = False
-                    break
+            for call in json_answers["Call"]:
+                # if it's not an intermediate call (needed for incremental grouding)
+                if len(call) > 0:
+                    for answer in call["Witnesses"]:
+                        # we append "" just to get the last . when we join latter
+                        answer = answer["Value"] + [""]
+                        answer_str = ".".join(answer)
+                        answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+                        answer_temp.write(answer_str)
+                        clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+                        #print("stdoudata check : {}".format(stdoutdata_check))
+                        json_check = json.loads(stdoutdata_check)
+                        answer_temp.close()
+                        os.remove(answer_temp.name)
+                        if not json_check["Result"] == "SATISFIABLE": 
+                            correct_solution = False
+                        break
             if correct_solution:
                 result_iteration[encoding] = duration
             else:
                 result_iteration[encoding] = sys.maxsize
             print("\tSatisfiable {}".format(correct_solution))
-            print("\tDuration {}".format(result_iteration[encoding]))
+            print("\tDuration {} seconds".format(result_iteration[encoding]))
         results.append(result_iteration)
         instance_temp.close()
         os.remove(instance_temp.name)

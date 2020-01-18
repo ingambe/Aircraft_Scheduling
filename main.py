@@ -121,10 +121,10 @@ def main():
     if args.output_file != None:
         output_file =  args.output_file
     if args.all != None:
-        answers = clyngor.solve(files=[instance, encoding])
+        answers = clyngor.solve(files=[instance, encoding], wait=True)
     else:
-        answers = clyngor.solve(files=[instance, encoding], nb_model=1)    
-    answers = clyngor.solve(files=[instance, encoding])
+        answers = clyngor.solve(files=[instance, encoding], wait=True, nb_model=1)    
+    answers = clyngor.solve(files=[instance, encoding], wait=True)
     solutions = [answer for answer in answers]
     if len(solutions) == 0:
         print("There is no solution")
