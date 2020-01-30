@@ -57,6 +57,9 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     # all the flight created and allocated to an aircraft
     flights = []
 
+    if long:
+        nb_aircraft += 1
+
     # represent all unique flight created (i.e. starting from airport A to airport B)
     flights_created = dict()
 
@@ -64,9 +67,6 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     first_fligth_aircraft = [None for i in range(nb_aircraft)]
 
     time_now = time.time()
-
-    if long:
-        nb_aircraft += 1
 
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
     for aircraft in range(nb_aircraft):
