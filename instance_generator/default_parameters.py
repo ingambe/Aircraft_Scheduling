@@ -1,4 +1,4 @@
-default_nb_aircraft = 15
+default_nb_aircraft = 20
 default_nb_airport = 40
 default_mean_length_flight = 140
 default_var_length_flight = 120
