@@ -44,7 +44,9 @@ def instance_generator(nb_aircraft = default_nb_aircraft,
         var_on_ground = default_var_on_ground,
         min_on_ground = default_min_on_ground,
         max_on_ground = default_max_on_ground,
-        verbose = False):
+        verbose = False,
+        long=False,
+        long_length=0):
     ''' This function generate a Solution model '''
     
     # all the flight created and allocated to an aircraft
@@ -138,6 +140,10 @@ def main():
     parser.add_argument('--gannt', action='store_true', help="This will output the gannt")
 
     parser.add_argument('--verbose', action='store_true', help="To get more information while the data are generated")
+
+    parser.add_argument('--force_long', action='store_true', help="Force to have a long ground time flight by having two specific aircraft")
+    parser.add_argument('--long_hours_ground_time', type=int, help="Hours of ground time between the long fligt")
+    
 
     args = parser.parse_args()
 
