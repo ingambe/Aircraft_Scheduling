@@ -13,8 +13,6 @@ assign(V2, A) :- assign(V1, A), aircraft(A), route(V1, V2), not first(V2, A).
 {route(V1, V2) : compatible(V1, V2)} = 1 :- first(V1, _).
 {route(V1, V2) : compatible(V1, V2)} = 1 :- flight(V2), not first(V2, _).
 
-:- flight(V1), not first(V1, _), #count{V2 : route(V1, V2)} > 1.
-
 % same aircraft assigned during the whole route
 :- route(V1, V2), assign(V1, A), not assign(V2, A).
 :- route(V1, V2), assign(V2, A), not assign(V1, A).
