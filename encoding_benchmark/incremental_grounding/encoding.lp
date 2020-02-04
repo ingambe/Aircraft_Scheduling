@@ -9,7 +9,7 @@
 % and for the other one we assign only one aircraft
 % {assign(V,A) : aircraft(A)} = 1 :- flight(V).
 
-compatible2(V1, V2, T2 - (T1 + (MIN * 60))) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), tat(V1, MIN), T1 + (MIN * 60) <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 != V2.
+compatible2(V1, V2, T2 - (T1 + (MIN * 60))) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), tat(V1, MIN), T1 + (MIN * 60) <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 < V2.
 
 :- flight(V), not routed(V, 1).
 
