@@ -1,6 +1,6 @@
 % Constants for configuring the encoding
 
-#const factor = 30. % factor to multiply minimal tat with
+#const factor = 60. % factor to multiply minimal tat with
 
 #const gap = 8000.  % time of staying at an airport must be shorter than the gap
 
@@ -11,6 +11,8 @@
 #const stay = 0.    % change to use encoding variant about staying at an airport
 
 #const keep = 0.    % change to use encoding variant about keeping aircraft locs
+
+#const symm = 0.    % change to disable symmetry breaking of aircraft assignment
 
 keeping(0) :- keep = 0.
 keeping(1) :- keep != 0.
@@ -68,11 +70,11 @@ start_next(T1,T2) :- start_aux(T1,T2), start_time(T2).
 
 :- choice = 0, route(V), #count{P : assign(V,P)} != 1.
 
-:- choice = 0, first(F,P), start_time(A,T), #count{V : start(V,A,T), assign(V,P)} > 1.
-
 {assign(V,P) : first(F,P)} = 1 :- route(V), choice != 0.
 
 :- choice != 0, start(V,A,T), assign(V,P), not at(P,A,T).
+
+:- first(F,P), start_time(A,T), #count{V : start(V,A,T), assign(V,P)} > 1.
 
 K {at(P,A,T)} :- end(V,A,T), first(V,P), keeping(K).
 K {at(P,A,T)} :- end(V,A,T), assign(V,P), keeping(K).
@@ -116,6 +118,27 @@ remain(P,T2,K+T1-T2) :- remain(P,T1,K), start_next(T1,T2), 0 < K,
 remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
 
 :- remain(P,T,0), start(V,T), assign(V,P).
+
+% Symmetry breaking to disambiguate flights
+
+arrive(V,A,T2,K)    :- cutoff(V,A,T2,G), scheme(A,T2,G,K), 0 < K, symm = 0.
+arrive(V,A,T2,#sup) :- end_tat(V,A,T1), end(V,A,T2), start_last(A,T), cutoff(K),
+                       arrive(A,T2), T < T1+K.
+arrive(A,T2,K)      :- arrive(V,A,T2,K).
+arrive(A,T2)        :- arrive(A,T2,K).
+
+arrive_sort(@insert((A,T2),K)) :- arrive(A,T2,K).
+
+arrive_index(A,T2,K,I) :- arrive_sort((A,T2)), (K,I) = @order((A,T2)).
+
+arrive_next(A,T2,K1,K2) :- arrive_index(A,T2,K1,I), arrive_index(A,T2,K2,I+1).
+
+%*
+longer(P1,P2,A,T1) :- at(P1,A,T1), first(V,P2), not at(P2,A,T1),
+                      not scheme(A,T1,).
+longer(P1,P2,A,T2) :- longer(P1,P2,A,T1), start_next(A,T1,T2),
+                      not assign(V,P1) : start(V,A,T1).
+*%
 
 % Output assignment of flights to aircrafts
 
