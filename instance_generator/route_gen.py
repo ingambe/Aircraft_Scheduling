@@ -70,7 +70,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     # represent the first fligth of each aircraft in the gant (first before now)
     first_fligth_aircraft = [None for i in range(nb_aircraft)]
 
-    time_now = time.time()
+    time_now = int(time.time())
     if long and short:
         print("Warning: Due to current limitation of the instance generator, it is not possible to have at the same time a short and a long ground time, short ground time has been desactivated")
         short = False

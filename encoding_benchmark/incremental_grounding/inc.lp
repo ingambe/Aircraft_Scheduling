@@ -5,19 +5,18 @@ import sys
 
 def main(prg):
 
-
-    stepinc   = prg.get_const("stepinc").number
     istop  = clingo.String("SAT")
 
     i = 0
     ret = None
 
+    #initial_ground = initial_ground()
     
     def cost_output(m):
-        print("Cost is {}".format(m.cost))
-        if m.cost[0] == 39000:
+        print("Cost is {}".format(m.cost[0]))
+        if m.cost[0] == 0:
             print("STOP")
-            sys.exit(0)
+            prg.interrupt()
 
     while (i == 0  or (
               (istop.string == "SAT"     and not ret.satisfiable) or
@@ -29,7 +28,8 @@ def main(prg):
             parts.append(("base", []))
         prg.ground(parts)
         i += 1
-        ret = prg.solve(on_model=cost_output)
+        #ret = prg.solve(on_model=cost_output)
+        ret = prg.solve()
 #end.
 
 #program step(t).

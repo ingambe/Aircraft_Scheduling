@@ -18,14 +18,8 @@ assign(V2, A) :- assign(V1, A), aircraft(A), route(V1, V2), not first(V2, A).
 :- route(V1, V2), assign(V1, A), not assign(V2, A).
 :- route(V1, V2), assign(V2, A), not assign(V1, A).
 
-% detect each violation
-violation_tat(V1, V2, T) :- V1 < V2, route(V1, V2) , end(V1, T1), start(V2, T2), tat(V1, MIN), T = (T1 + MIN * 60) - T2, T > 0.
+violation_tat(V1, V2, T) :- V1 < V2, route(V1, V2), end(V1, T1), start(V2, T2), tat(V1, MIN), T = (T1 + MIN * 60) - T2, T > 0.
 
-% handle the violation cost
-tat_cost(X) :- cost(tat, C), #count{V1 : violation_tat(V1, _, T)} = TAT, X = C * TAT.
-
-solution_cost(C) :- C = C1, tat_cost(C1).
-
-:~ solution_cost(C). [C]
+:~ violation_tat(V1, V2, T), cost(tat, C). [C, V1]
 
 #show assign/2.
