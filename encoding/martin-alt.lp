@@ -137,7 +137,7 @@ enable(A,T,P2,I) :- first(V,P2), P1 = P2-1,
                     enable(A,T,P1,I), not at(P1,A,T),
                     depart_count(A,T,C), first(F,P2+C-I).
 enable(A,T,P2,I) :- first(V,P2), P1 = P2-1,
-                    depart_index(A,T,I), P1 < I,
+                    depart_index(A,T,I), I <= P2,
                     depart_index(A,T,V1,I-1), assign(V1,P1),
                     depart_count(A,T,C), first(F,P2+C-I).
 
