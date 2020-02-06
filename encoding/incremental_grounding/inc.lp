@@ -11,7 +11,10 @@ def main(prg):
         #print("Solution cost is {}".format(m.cost[0]))
         nonlocal solution_cost
         nonlocal stop
-        if m.cost[0] == solution_cost:
+        # if it's the second time we have the solution cost
+        # or if we don't have cost for our problem
+        # then we stop
+        if m.cost[0] == solution_cost or len(m.cost) == 0:
             #prg.interrupt()
             stop = True
         solution_cost = m.cost[0]
