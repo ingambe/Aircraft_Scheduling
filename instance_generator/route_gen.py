@@ -439,7 +439,7 @@ def asp_input_fact(output_file, solution):
     # we put the generated instance inside the ../instances folder
     file = open(
         str(pathlib.Path(__file__).parent.parent) + "/instances/" +
-        output_file + ".lp", "w")
+        output_file + ".lp", "w+")
     file.write(repr(solution))
     file.close()
 
