@@ -4,9 +4,10 @@ import clingo
 import sys
 
 def main(prg):
-
     
-    def cost_output(m):
+    # we stop if we have two time in a row the same cost
+    # for performance only, can be desactivated
+    def handle_stop(m):
         #print("Solution cost is {}".format(m.cost[0]))
         nonlocal solution_cost
         nonlocal stop
@@ -14,7 +15,6 @@ def main(prg):
             #prg.interrupt()
             stop = True
         solution_cost = m.cost[0]
-
 
     istop  = clingo.String("SAT")
 
@@ -34,7 +34,7 @@ def main(prg):
             parts.append(("base", []))
         prg.ground(parts)
         i += 1
-        ret = prg.solve(on_model=cost_output)
+        ret = prg.solve(on_model=handle_stop)
         #ret = prg.solve()
 #end.
 
