@@ -52,10 +52,10 @@ start_last(L)   :- end_next, L = #max{T : start_last(A,T)}.
 start_time(A,T2) :- end_next(A,T1,T2).
 start_time(A,T2) :- start_next(A,T1,T2).
 
-start_next(A,T1,T2) :- start_aux(A,T1,T2), time(s,A,T2).
-
 start_aux(A,T1,T2) :- start_time(A,T1), time_next(T1,T2), not start_last(A,T1).
 start_aux(A,T1,T2) :- start_aux(A,T1,T), time_next(T,T2), not time(s,A,T).
+
+start_next(A,T1,T2) :- start_aux(A,T1,T2), time(s,A,T2).
 
 start_time(T) :- start_time(A,T).
 
@@ -103,18 +103,18 @@ scheme(A,T1,G,G-K)       :- cutoff(A,T1,G,T2,K), K <= 0, check = 0.
 scheme(A,T1,G,G+T4-T2-K) :- cutoff(A,T1,G,T2,K), K <= 0, check != 0,
                             start_next(A,T3,T2), start_next(T3,T4).
 
-result(V,A,T1,K) :- cutoff(V,A,T1,G), scheme(A,T1,G,K).
+budget(V,A,T1,K) :- cutoff(V,A,T1,G), scheme(A,T1,G,K).
 
-remain(P,A,T1,K)       :- result(V,A,T1,K), first(V,P), check = 0.
-remain(P,A,T1,K)       :- result(V,A,T1,K), assign(V,P), check = 0.
+remain(P,A,T1,K)       :- budget(V,A,T1,K), first(V,P), check = 0.
+remain(P,A,T1,K)       :- budget(V,A,T1,K), assign(V,P), check = 0.
 remain(P,A,T2,K+T1-T2) :- remain(P,A,T1,K), start_next(A,T1,T2), 0 < K,
                           not assign(V,P) : start(V,A,T1).
 remain(P,A,T2,0)       :- remain(P,A,T1,0), start_next(A,T1,T2).
 
 :- remain(P,A,T,0), start(V,A,T), assign(V,P).
 
-remain(P,T1,K)       :- result(V,A,T1,K), first(V,P), check != 0.
-remain(P,T1,K)       :- result(V,A,T1,K), assign(V,P), check != 0.
+remain(P,T1,K)       :- budget(V,A,T1,K), first(V,P), check != 0.
+remain(P,T1,K)       :- budget(V,A,T1,K), assign(V,P), check != 0.
 remain(P,T2,K+T1-T2) :- remain(P,T1,K), start_next(T1,T2), 0 < K,
                         not assign(V,P) : start(V,T1).
 remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
@@ -127,18 +127,21 @@ depart_sort(@insert((d,A,T),V)) :- start(V,A,T), symm = 0.
 
 depart_index(A,T,V,I) :- depart_sort((d,A,T)), (V,I) = @order((d,A,T)).
 depart_index(A,T,I)   :- depart_index(A,T,V,I).
-depart_count(A,T,I)   :- depart_index(A,T,I), not depart_index(A,T,I+1).
+depart_index(A,T)     :- depart_index(A,T,I).
 
-% depart_next(A,T,V1,V2) :- depart_index(A,T,V1,I), depart_index(A,T,V2,I+1).
+depart_count(A,T,C) :- depart_index(A,T), C = #max{I : depart_index(A,T,I)}.
 
-enable(A,T,1,1)   :- depart_index(A,T,1), first(V,1),
-                     depart_count(A,T,I), first(F,I).
-enable(A,T,P2,I1) :- depart_index(A,T,I1), first(V,P2), P1 = P2-1,
-                     depart_count(A,T,I), first(F,P2+I-I1),
-                     enable(A,T,P1,I1), not at(P1,A,T).
-enable(A,T,P2,I2) :- depart_index(A,T,I2), first(V,P2), P1 = P2-1, P1 < I2,
-                     depart_count(A,T,I), first(F,P2+I-I2),
-                     depart_index(A,T,V1,I2-1), assign(V1,P1).
+enable(A,T,1,1)  :- first(V,1),
+                    depart_count(A,T,C), first(F,C).
+enable(A,T,P2,I) :- first(V,P2), P1 = P2-1,
+                    enable(A,T,P1,I), not at(P1,A,T),
+                    depart_count(A,T,C), first(F,P2+C-I).
+enable(A,T,P2,I) :- first(V,P2), P1 = P2-1,
+                    depart_index(A,T,I), P1 < I,
+                    depart_index(A,T,V1,I-1), assign(V1,P1),
+                    depart_count(A,T,C), first(F,P2+C-I).
+
+:- depart_index(A,T,V,I), assign(V,P), not enable(A,T,P,I).
 
 %*
 enable(2,A,T,V1)  :- depart_index(A,T,V1,1), first(V,2), not at(1,A,T).
@@ -147,7 +150,7 @@ enable(P2,A,T,V2) :- depart_next(A,T,V1,V2), first(V,P2), P2 = P1+1, assign(V1,P
 *%
 
 %*
-arrive(V,A,T2,K)    :- result(V,A,T2,K), 0 < K, symm = 0.
+arrive(V,A,T2,K)    :- budget(V,A,T2,K), 0 < K, symm = 0.
 arrive(V,A,T2,#sup) :- end_tat(V,A,T1), end(V,A,T2), start_last(A,T), cutoff(K),
                        arrive(A,T2), T < T1+K.
 arrive(A,T2,K)      :- arrive(V,A,T2,K).
