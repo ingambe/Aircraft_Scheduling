@@ -37,7 +37,7 @@ def main():
     args = parser.parse_args()
     number_of_run = args.runs
     print("Start of the benchmarks")
-    encodings = [x for x in os.listdir("../encoding_benchmark/")]
+    encodings = [x for x in os.listdir("../encoding/")]
     print("Encodings to test:")
     for encoding in encodings:
         print("\t-{}".format(encoding))
