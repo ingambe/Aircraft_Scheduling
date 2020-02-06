@@ -33,7 +33,7 @@ def main():
     '''
     parser = argparse.ArgumentParser(description='Benchmark ! :D')
     parser.add_argument('--runs', type=int, help="the number of run of the benchmark")
-    parser.add_argument('--all', action='store_true', help="if we need to find all the solutions")
+    parser.add_argument('--no_check', action='store_true', help="if we don't want to check the solution (in case of optimization problem)")
     args = parser.parse_args()
     number_of_run = args.runs
     print("Start of the benchmarks")
@@ -52,10 +52,7 @@ def main():
             print("Encoding {}:".format(encoding))
             files_encoding = ["../encoding_benchmark/" + encoding + "/" + f for f in os.listdir("../encoding_benchmark/" + encoding) if isfile(join("../encoding_benchmark/" + encoding, f))]
             start = time.time()
-            if args.all:
-                clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["0"] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            else:
-                clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (stdoutdata, stderrdata) = clingo.communicate()
             clingo.wait()
             end = time.time()
@@ -63,25 +60,25 @@ def main():
             #print("out: {}".format(stdoutdata))
             #print("error: {}".format(stderrdata))
             json_answers = json.loads(stdoutdata)
-            correct_solution = json_answers["Result"] == "SATISFIABLE"
-            for call in json_answers["Call"]:
-                # if it's not an intermediate call (needed for incremental grouding)
-                if len(call) > 0:
-                    for answer in call["Witnesses"]:
-                        # we append "" just to get the last . when we join latter
-                        answer = answer["Value"] + [""]
-                        answer_str = ".".join(answer)
-                        answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
-                        answer_temp.write(answer_str)
-                        clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
-                        #print("stdoudata check : {}".format(stdoutdata_check))
-                        json_check = json.loads(stdoutdata_check)
-                        answer_temp.close()
-                        os.remove(answer_temp.name)
-                        if not json_check["Result"] == "SATISFIABLE": 
-                            correct_solution = False
-                        break
+            correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
+            call = json_answers["Call"][-1]
+            # if it's not an intermediate call (needed for incremental grouding)
+            if args.no_check == None:
+                answer = call["Witnesses"][-1]
+                print("la")
+                # we append "" just to get the last . when we join latter
+                answer = answer["Value"] + [""]
+                answer_str = ".".join(answer)
+                answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+                answer_temp.write(answer_str)
+                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+                #print("stdoudata check : {}".format(stdoutdata_check))
+                json_check = json.loads(stdoutdata_check)
+                answer_temp.close()
+                os.remove(answer_temp.name)
+                if not json_check["Result"] == "SATISFIABLE": 
+                    correct_solution = False
             if correct_solution:
                 result_iteration[encoding] = duration
             else:

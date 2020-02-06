@@ -51,7 +51,11 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                        max_on_ground=default_max_on_ground,
                        verbose=False,
                        long=default_force,
-                       long_ground_time=default_ground_force):
+                       long_ground_time=default_ground_force,
+                       short=default_short,
+                       short_violation=default_short_violation,
+                       tat_cost=default_tat_cost,
+                       sb_cost=default_sb_cost):
     ''' This function generate a Solution model '''
 
     # all the flight created and allocated to an aircraft
@@ -67,6 +71,9 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     first_fligth_aircraft = [None for i in range(nb_aircraft)]
 
     time_now = time.time()
+    if long and short:
+        print("Warning: Due to current limitation of the instance generator, it is not possible to have at the same time a short and a long ground time, short ground time has been desactivated")
+        short = False
 
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
     for aircraft in range(nb_aircraft):
@@ -94,6 +101,12 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
+                elif short and aircraft == nb_aircraft - 1:
+                    start_airport = nb_airport
+                    end_airport = nb_airport + 1
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
                 else:
                     if verbose:
                         print("First flight of aircraft {}, is {} - {}".format(
@@ -115,7 +128,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 # we recover the previous fligth (last added)
                 previous = flights[-1]
                 start_airport = previous.end_airport
-                if long and aircraft == nb_aircraft:
+                if long and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport:
                         end_airport == nb_airport + 1
                     else:
@@ -123,6 +136,14 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start + long_ground_time * 60
+                elif short and aircraft == nb_aircraft - 1:
+                    if start_airport == nb_airport:
+                        end_airport == nb_airport + 1
+                    else:
+                        end_airport == nb_airport
+                    minimal_legal_start = previous.end_date + (previous.tat *
+                                                               60)
+                    start_date = minimal_legal_start - short_violation * 60
                 else:
                     end_airport = injective_airport(
                         start_airport,
@@ -156,8 +177,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             if not (start_airport, end_airport) in flights_created:
                 flights_created[(start_airport, end_airport)] = flight_object
     solution = models.Solution(nb_aircraft, nb_airport, flights,
-                               first_fligth_aircraft)
-    if long:
+                               first_fligth_aircraft, tat_cost, sb_cost)
+    if long or short:
         # we have added two airports
         nb_airport += 2
     return solution

@@ -1,9 +1,11 @@
 class Solution(object):
-    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft):
+    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost):
         self.nb_aircraft = nb_aircraft
         self.nb_airport = nb_airport
         self.flights = fligths
         self.first_fligth_aircraft = first_fligth_aircraft
+        self.tat_cost = tat_cost
+        self.sb_cost = sb_cost
         # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
         self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
         for flight in self.flights:
@@ -11,6 +13,8 @@ class Solution(object):
 
     def __repr__(self):
         result = ""
+        result += "cost(tat, {}).\n".format(self.tat_cost)
+        result += "cost(sb, {}).\n".format(self.sb_cost)
         result += "aircraft(1..{}).\n".format(self.nb_aircraft)
         result += "airport(1..{}).\n".format(self.nb_airport)
         result += "flight(1..{}).\n".format(len(self.flights))

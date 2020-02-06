@@ -18,3 +18,7 @@ default_min_on_ground = 0
 default_max_on_ground = 12000
 default_force = True
 default_ground_force = 10080
+default_short = False
+default_short_violation = 15
+default_tat_cost = 500
+default_sb_cost = 5000
