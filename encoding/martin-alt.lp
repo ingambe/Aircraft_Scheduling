@@ -123,6 +123,40 @@ remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
 
 % Symmetry breaking to disambiguate flights
 
+budget(A,T1,K) :- budget(V,A,T1,K), 0 < K, symm = 0.
+
+arrive(V,A,T2,#sup) :- end_tat(V,A,T1), end(V,A,T2), start_last(A,T), symm = 0,
+                       T < T1+K : cutoff(K).
+arrive(A,T2,K)      :- arrive(V,A,T2,K).
+arrive(A,T2,K)      :- budget(A,T2,K).
+
+arrive_sort(@insert((a,A,T2),K)) :- arrive(A,T2,K).
+
+arrive_index(A,T2,K,I) :- arrive_sort((a,A,T2)), (K,I) = @order((a,A,T2)).
+
+arrive_next(A,T2,K1,K2) :- arrive_index(A,T2,K1,I), arrive_index(A,T2,K2,I+1).
+
+unroll(A,T1,K,T2,G) :- budget(A,T1,K), start_next(A,T1,T2), G = K+T1-T2, 0 < G.
+unroll(A,T1,K,T2,G) :- unroll(A,T1,K,T,L), start_next(A,T,T2), G = L+T-T2, 0 < G.
+
+unroll(A,T1,T2,#sup) :- arrive(A,T1,#sup), start_next(A,T1,T2).
+unroll(A,T1,T2,G)    :- unroll(A,T1,T,G), start_next(A,T,T2).
+
+unroll(A,T2,G) :- unroll(A,T1,K,T2,G).
+unroll(A,T2,G) :- unroll(A,T1,T2,G).
+unroll(A,T2)   :- unroll(A,T2,G).
+
+lowest(A,T2,G) :- unroll(A,T2), G = #min{L : unroll(A,T2,L)}.
+
+access(A,T2) :- arrive_index(A,T2,K,2).
+access(A,T2) :- arrive_index(A,T2,K,1), lowest(A,T2,G), G < K.
+
+gather(A,T1) :- access(A,T1).
+gather(A,T2) :- gather(A,T1,T2).
+
+gather(A,T1,T2) :- gather(A,T1), start_next(A,T1,T2), #count{G : unroll(A,T2,G)} > 1.
+
+%*
 depart_sort(@insert((d,A,T),V)) :- start(V,A,T), symm = 0.
 
 depart_index(A,T,V,I) :- depart_sort((d,A,T)), (V,I) = @order((d,A,T)).
@@ -147,6 +181,7 @@ enable(A,T,P2,I) :- first(V,P2), P1 = P2-1,
                     depart_count(A,T,C), first(F,P2+C-I).
 
 :- depart_index(A,T,V,I), assign(V,P), not enable(A,T,P,I).
+*%
 
 %*
 enable(2,A,T,V1)  :- depart_index(A,T,V1,1), first(V,2), not at(1,A,T).
