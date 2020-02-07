@@ -131,6 +131,11 @@ depart_index(A,T)     :- depart_index(A,T,I).
 
 depart_count(A,T,C) :- depart_index(A,T), C = #max{I : depart_index(A,T,I)}.
 
+passon(A,T,P,1) :- first(V,P), first(V1,P+1), not at(P,A,T),
+                   depart_count(A,T,C), first(F,C+1).
+passon(A,T,P,I+1) :- passon(A,T,P,I), not depart_count(A,T,I).
+                 % depart_count(A,T,C), first(F,P+C-I). % when needed
+
 enable(A,T,1,1)  :- first(V,1),
                     depart_count(A,T,C), first(F,C).
 enable(A,T,P2,I) :- first(V,P2), P1 = P2-1,
