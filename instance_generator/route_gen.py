@@ -153,7 +153,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                                                60)
                     start_date = minimal_legal_start + truncated_norm(
                         min_on_ground, max_on_ground, mean_on_ground,
-                        var_on_ground)
+                        var_on_ground) * 60
                 # if we already got a flight starting from A to B, we get back the length of fly and TAT
                 if (start_airport, end_airport) in flights_created:
                     if verbose:
