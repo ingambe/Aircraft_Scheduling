@@ -14,4 +14,6 @@ compatible(V1, V2) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), tat(V1
 :- flight(V), #count{A : assign(V, A)} > 1.
 :- flight(V), #count{A : assign(V, A)} < 1.
 
+:- max_solution_tat_cost(X), cost(tat, C), K = #count{V : violation_tat(V, _, _)}, X < K * C.
+
 #show .

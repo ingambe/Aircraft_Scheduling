@@ -1,14 +1,33 @@
 #script (python) 
 
 import clingo
+import sys
 
 def main(prg):
-    stepinc   = prg.get_const("stepinc").number
+    
+    # we stop if we have two time in a row the same cost
+    # for performance only, can be desactivated
+    def handle_stop(m):
+        #print("Solution cost is {}".format(m.cost[0]))
+        nonlocal solution_cost
+        nonlocal stop
+        # if it's the second time we have the solution cost
+        # or if we don't have cost for our problem
+        # then we stop
+        if m.cost[0] == solution_cost or len(m.cost) == 0:
+            #prg.interrupt()
+            stop = True
+        solution_cost = m.cost[0]
+
     istop  = clingo.String("SAT")
 
     i = 0
     ret = None
-    while (i == 0  or (
+
+    solution_cost = -1
+    stop = False
+
+    while (not stop  or (
               (istop.string == "SAT"     and not ret.satisfiable) or
               (istop.string == "UNSAT"   and not ret.unsatisfiable) or 
               (istop.string == "UNKNOWN" and not ret.unknown))):
@@ -18,7 +37,8 @@ def main(prg):
             parts.append(("base", []))
         prg.ground(parts)
         i += 1
-        ret = prg.solve()
+        ret = prg.solve(on_model=handle_stop)
+        #ret = prg.solve()
 #end.
 
 #program step(t).

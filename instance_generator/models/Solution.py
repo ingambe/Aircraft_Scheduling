@@ -1,11 +1,13 @@
 class Solution(object):
-    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost):
+    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost, solution_tat_cost):
         self.nb_aircraft = nb_aircraft
         self.nb_airport = nb_airport
         self.flights = fligths
         self.first_fligth_aircraft = first_fligth_aircraft
         self.tat_cost = tat_cost
         self.sb_cost = sb_cost
+        self.solution_tat_cost = solution_tat_cost
+        self.solution_cost = solution_tat_cost
         # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
         self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
         for flight in self.flights:
@@ -13,6 +15,7 @@ class Solution(object):
 
     def __repr__(self):
         result = ""
+        result += "max_solution_tat_cost({}).\n".format(self.solution_tat_cost)
         result += "cost(tat, {}).\n".format(self.tat_cost)
         result += "cost(sb, {}).\n".format(self.sb_cost)
         result += "aircraft(1..{}).\n".format(self.nb_aircraft)
@@ -48,6 +51,7 @@ class Solution(object):
         result += "\n"
         # way more conveniant to check if we get one line per aircraft
         result += "%* One possible solution: \n"
+        result += "solution_tat_cost({}).\n".format(self.solution_tat_cost)
         for aircraft in range(len(self.flight_of_aircraft)):
             result += "For aircraft {}\n".format(aircraft + 1)
             for flight in self.flight_of_aircraft[aircraft]:

@@ -65,7 +65,6 @@ def main():
             # if it's not an intermediate call (needed for incremental grouding)
             if args.no_check == None:
                 answer = call["Witnesses"][-1]
-                print("la")
                 # we append "" just to get the last . when we join latter
                 answer = answer["Value"] + [""]
                 answer_str = ".".join(answer)

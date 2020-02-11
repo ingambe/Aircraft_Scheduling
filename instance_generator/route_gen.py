@@ -76,6 +76,9 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
         short = False
 
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
+
+    solution_tat_cost = 0
+
     for aircraft in range(nb_aircraft):
         flights_per_aircraft[aircraft] = truncated_norm(
             min_flight_per_aicraft, max_flight_per_aicraft,
@@ -144,6 +147,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start - short_violation * 60
+                    solution_tat_cost += tat_cost
                 else:
                     end_airport = injective_airport(
                         start_airport,
@@ -177,7 +181,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             if not (start_airport, end_airport) in flights_created:
                 flights_created[(start_airport, end_airport)] = flight_object
     solution = models.Solution(nb_aircraft, nb_airport, flights,
-                               first_fligth_aircraft, tat_cost, sb_cost)
+                               first_fligth_aircraft, tat_cost, sb_cost, solution_tat_cost)
     if long or short:
         # we have added two airports
         nb_airport += 2
