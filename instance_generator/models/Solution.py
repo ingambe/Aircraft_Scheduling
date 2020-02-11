@@ -51,7 +51,7 @@ class Solution(object):
         result += "\n"
         # way more conveniant to check if we get one line per aircraft
         result += "%* One possible solution: \n"
-        result += "solution_tat_cost({}).\n".format(self.solution_tat_cost)
+        result += "max_solution_tat_cost({}).\n".format(self.solution_tat_cost)
         for aircraft in range(len(self.flight_of_aircraft)):
             result += "For aircraft {}\n".format(aircraft + 1)
             for flight in self.flight_of_aircraft[aircraft]:

@@ -64,6 +64,9 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     if long:
         nb_aircraft += 1
 
+    if short:
+        nb_aircraft += 1
+
     # represent all unique flight created (i.e. starting from airport A to airport B)
     flights_created = dict()
 
@@ -71,10 +74,6 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     first_fligth_aircraft = [None for i in range(nb_aircraft)]
 
     time_now = int(time.time())
-    if long and short:
-        print("Warning: Due to current limitation of the instance generator, it is not possible to have at the same time a short and a long ground time, short ground time has been desactivated")
-        short = False
-
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
 
     solution_tat_cost = 0
@@ -98,15 +97,28 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             # for the first flight, the start airport is to be choosed between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
             if first_flight:
-                if long and aircraft == nb_aircraft - 1:
+                if long and not short and aircraft == nb_aircraft - 1:
                     start_airport = nb_airport
                     end_airport = nb_airport + 1
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
-                elif short and aircraft == nb_aircraft - 1:
+                elif long and short and aircraft == nb_aircraft - 2:
                     start_airport = nb_airport
                     end_airport = nb_airport + 1
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+                elif short and not long and aircraft == nb_aircraft - 1:
+                    start_airport = nb_airport
+                    end_airport = nb_airport + 1
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+
+                elif short and long and aircraft == nb_aircraft - 1:
+                    start_airport = nb_airport + 2
+                    end_airport = nb_airport + 3
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
@@ -131,7 +143,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 # we recover the previous fligth (last added)
                 previous = flights[-1]
                 start_airport = previous.end_airport
-                if long and aircraft == nb_aircraft - 1:
+                if long and not short and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport:
                         end_airport == nb_airport + 1
                     else:
@@ -139,11 +151,28 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start + long_ground_time * 60
-                elif short and aircraft == nb_aircraft - 1:
+                elif long and short and aircraft == nb_aircraft - 2:
                     if start_airport == nb_airport:
                         end_airport == nb_airport + 1
                     else:
                         end_airport == nb_airport
+                    minimal_legal_start = previous.end_date + (previous.tat *
+                                                               60)
+                    start_date = minimal_legal_start + long_ground_time * 60
+                elif short and not long and aircraft == nb_aircraft - 1:
+                    if start_airport == nb_airport:
+                        end_airport == nb_airport + 1
+                    else:
+                        end_airport == nb_airport
+                    minimal_legal_start = previous.end_date + (previous.tat *
+                                                               60)
+                    start_date = minimal_legal_start - short_violation * 60
+                    solution_tat_cost += tat_cost
+                elif short and long and aircraft == nb_aircraft - 1:
+                    if start_airport == nb_airport + 2:
+                        end_airport == nb_airport + 3
+                    else:
+                        end_airport == nb_airport + 2
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start - short_violation * 60
@@ -182,8 +211,11 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 flights_created[(start_airport, end_airport)] = flight_object
     solution = models.Solution(nb_aircraft, nb_airport, flights,
                                first_fligth_aircraft, tat_cost, sb_cost, solution_tat_cost)
-    if long or short:
-        # we have added two airports
+    if long:
+        # we have added two airports for the two special long airport
+        nb_airport += 2
+    if short:
+        # we have added two airports for the two special short tat airport
         nb_airport += 2
     return solution
 
