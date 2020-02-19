@@ -72,8 +72,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     # represent all unique flight created (i.e. starting from airport A to airport B)
     flights_created = dict()
 
-    # represent the first fligth of each aircraft in the gant (first before now)
-    first_fligth_aircraft = [None for i in range(nb_aircraft)]
+    # represent the first flight of each aircraft in the gant (first before now)
+    first_flight_aircraft = [None for i in range(nb_aircraft)]
 
     time_now = int(time.time())
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
@@ -243,8 +243,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 if (start_airport, end_airport) in flights_created:
                     if verbose:
                         print(
-                            "The flight {} - {} has already been added to the database, we retrive the info"
-                                .format(start_airport, end_airport))
+                            "The flight {} - {} has already been added to the database, we retrieve the info".format(start_airport, end_airport))
                     previously_created = flights_created[(start_airport,
                                                           end_airport)]
                     length_fly = previously_created.length_fly
@@ -261,13 +260,13 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                           tat)
             # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
             if first_flight:
-                first_fligth_aircraft[aircraft] = flight_object
+                first_flight_aircraft[aircraft] = flight_object
             flights.append(flight_object)
             first_flight = False
             if not (start_airport, end_airport) in flights_created:
                 flights_created[(start_airport, end_airport)] = flight_object
     solution = models.Solution(nb_aircraft, nb_airport, flights,
-                               first_fligth_aircraft, tat_cost, sb_cost, solution_tat_cost)
+                               first_flight_aircraft, tat_cost, sb_cost, solution_tat_cost)
     if long:
         # we have added two airports for the two special long airport
         nb_airport += 2
@@ -283,10 +282,10 @@ def main():
     parser.add_argument(
         '--aircraft',
         type=int,
-        help="the number of aircrafts in the outputed instance")
+        help="the number of aircraft in the outputted instance")
     parser.add_argument('--airport',
                         type=int,
-                        help="the number of airports in the outputed instance")
+                        help="the number of airports in the outputted instance")
     parser.add_argument('--meanFlightLength',
                         type=int,
                         help="Average length of the flights (in minutes)")
@@ -303,16 +302,16 @@ def main():
 
     parser.add_argument('--meanFlightAircraft',
                         type=int,
-                        help="Average flights per aicraft")
+                        help="Average flights per aircraft")
     parser.add_argument('--varFlightAircraft',
                         type=int,
-                        help="Variance of flights per aicraft")
+                        help="Variance of flights per aircraft")
     parser.add_argument('--minFlightAircraft',
                         type=int,
-                        help="Minimum flights per aicraft")
+                        help="Minimum flights per aircraft")
     parser.add_argument('--maxFlightAircraft',
                         type=int,
-                        help="Maximum flights per aicraft")
+                        help="Maximum flights per aircraft")
 
     parser.add_argument('--meanTat',
                         type=int,
@@ -352,7 +351,7 @@ def main():
         '--default',
         action='store_true',
         help=
-        "This generate instancies with default value for the previously listed arguments"
+        "This generate instances with default value for the previously listed arguments"
     )
 
     parser.add_argument('--gannt',
@@ -377,7 +376,7 @@ def main():
     args = parser.parse_args()
 
     output_file = "instance"
-    if args.output_file != None:
+    if args.output_file is not None:
         output_file = args.output_file
 
     # if the user asked for default value
@@ -385,16 +384,19 @@ def main():
         solution = instance_generator(verbose=args.verbose)
     else:
         # we ask when we don't have the value specified by the input
-        if args.aircraft != None:
+        if args.aircraft is not None:
             nb_aircraft = args.aircraft
         else:
             nb_aircraft = int(input("Enter the number of aircrafts : "))
-        if args.airport != None:
+        if args.airport is not None:
             nb_airport = args.airport
         else:
             nb_airport = int(input("Enter the number of airports : "))
         # information about length of flights
-        if args.meanFlightLength != None and args.varFlightLength != None and args.minFlightLength != None and args.maxFlightLength != None:
+        if args.meanFlightLength is not None \
+                and args.varFlightLength is not None \
+                and args.minFlightLength is not None \
+                and args.maxFlightLength is not None:
             mean_length_flight = args.meanFlightLength
             var_length_flight = args.varFlightLength
             min_length_flight = args.minFlightLength
@@ -412,18 +414,21 @@ def main():
                 input("Max length of the flights (still in minutes) : "))
         # information about number of flight to aircraft
         if args.meanFlightAircraft != None and args.varFlightAircraft != None and args.minFlightAircraft != None and args.maxFlightAircraft != None:
-            mean_flight_per_aicraft = args.meanFlightAircraft
-            var_flight_per_aicraft = args.varFlightAircraft
-            min_flight_per_aicraft = args.minFlightAircraft
-            max_flight_per_aicraft = args.maxFlightAircraft
+            mean_flight_per_aircraft = args.meanFlightAircraft
+            var_flight_per_aircraft = args.varFlightAircraft
+            min_flight_per_aircraft = args.minFlightAircraft
+            max_flight_per_aircraft = args.maxFlightAircraft
         else:
-            mean_flight_per_aicraft = int(input("Mean flight per aicraft : "))
-            var_flight_per_aicraft = int(
+            mean_flight_per_aircraft = int(input("Mean flight per aicraft : "))
+            var_flight_per_aircraft = int(
                 input("Variance flight per aicraft : "))
-            min_flight_per_aicraft = int(input("Min flight per aicraft : "))
-            max_flight_per_aicraft = int(input("Max flight per aicraft : "))
+            min_flight_per_aircraft = int(input("Min flight per aicraft : "))
+            max_flight_per_aircraft = int(input("Max flight per aicraft : "))
         # information about TAT (Turn Around Time) between two flights
-        if args.meanTat != None and args.varTat != None and args.minTat != None and args.maxTat != None:
+        if args.meanTat is not None and\
+                args.varTat is not None and\
+                args.minTat is not None and\
+                args.maxTat is not None:
             mean_tat = args.meanTat
             var_tat = args.varTat
             min_tat = args.minTat
@@ -463,9 +468,9 @@ def main():
                     "Max time on ground between two flights (in minutes) : "))
         solution = instance_generator(
             nb_aircraft, nb_airport, mean_length_flight, var_length_flight,
-            min_length_flight, max_length_flight, mean_flight_per_aicraft,
-            var_flight_per_aicraft, min_flight_per_aicraft,
-            max_flight_per_aicraft, mean_tat, var_tat, min_tat, max_tat,
+            min_length_flight, max_length_flight, mean_flight_per_aircraft,
+            var_flight_per_aircraft, min_flight_per_aircraft,
+            max_flight_per_aircraft, mean_tat, var_tat, min_tat, max_tat,
             mean_on_ground, var_on_ground, min_on_ground, max_on_ground,
             args.verbose, args.force_long, args.long_minutes_ground_time)
 
