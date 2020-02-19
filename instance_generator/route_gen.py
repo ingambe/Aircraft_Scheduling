@@ -123,9 +123,6 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
                 else:
-                    if verbose:
-                        print("First flight of aircraft {}, is {} - {}".format(
-                            i, start_airport, end_airport))
                     start_airport = truncated_norm(1, nb_airport,
                                                    math.ceil(nb_airport / 2),
                                                    math.ceil(nb_airport / 4))
@@ -134,6 +131,10 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         truncated_norm(1, nb_airport - 1,
                                        math.ceil((nb_airport - 1) / 2),
                                        math.ceil((nb_airport - 1) / 4)))
+
+                    if verbose:
+                        print("First flight of aircraft {}, is {} - {}".format(
+                            i, start_airport, end_airport))
                     # multiply by 60 to convert from minute to second (epoch is in second)
                     # this allow to have a normal distribution between the flight end a time now and the flight start at time now
                     start_date = truncated_norm(time_now - length_fly,
@@ -145,34 +146,34 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 start_airport = previous.end_airport
                 if long and not short and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport:
-                        end_airport == nb_airport + 1
+                        end_airport = nb_airport + 1
                     else:
-                        end_airport == nb_airport
+                        end_airport = nb_airport
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start + long_ground_time * 60
                 elif long and short and aircraft == nb_aircraft - 2:
                     if start_airport == nb_airport:
-                        end_airport == nb_airport + 1
+                        end_airport = nb_airport + 1
                     else:
-                        end_airport == nb_airport
+                        end_airport = nb_airport
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start + long_ground_time * 60
                 elif short and not long and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport:
-                        end_airport == nb_airport + 1
+                        end_airport = nb_airport + 1
                     else:
-                        end_airport == nb_airport
+                        end_airport = nb_airport
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start - short_violation * 60
                     solution_tat_cost += tat_cost
                 elif short and long and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport + 2:
-                        end_airport == nb_airport + 3
+                        end_airport = nb_airport + 3
                     else:
-                        end_airport == nb_airport + 2
+                        end_airport = nb_airport + 2
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start - short_violation * 60
