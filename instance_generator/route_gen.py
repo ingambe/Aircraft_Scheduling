@@ -15,6 +15,8 @@ import models
 import argparse
 from default_parameters import *
 
+from instance_generator.models.Maintenance import Maintenance
+
 
 def injective_airport(start, end):
     ''' Injective function to map [0, nb_airport] -> [0, nb_airport]\start '''
@@ -61,6 +63,9 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     # all the flight created and allocated to an aircraft
     flights = []
 
+    # all maintenances created and allocated to an aircraft
+    maintenances = []
+
     if long:
         nb_aircraft += 1
 
@@ -76,6 +81,27 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     time_now = int(time.time())
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
 
+    # here we store the start counter of the aircraft maintenance
+    minute_last_maintenance = {}
+    MINUTES_7DAYS = 10080
+    # we leave at least one day, to avoid having the aicraft already overused
+    minute_last_maintenance['7DAY'] = [truncated_norm(
+            0, MINUTES_7DAYS - (MINUTES_7DAYS / 7),
+            MINUTES_7DAYS / 2, MINUTES_7DAYS / 7) for i in range(nb_aircraft)]
+
+
+    # here we store the maintenance limits
+    limit_minute_last_maintenance = {}
+    limit_minute_last_maintenance['7DAY'] = MINUTES_7DAYS
+
+    # here we store the length of the maintenance
+    LENGTH_MIN_MAINTENANCE = {}
+    LENGTH_MIN_MAINTENANCE["7DAY"] = 240 # 4hours
+
+    # here we store the airport of the maintenances
+    AIRPORTS_MAINTENANCE = {}
+    AIRPORTS_MAINTENANCE["7DAY"] = [1, 2, 3]
+
     solution_tat_cost = 0
 
     for aircraft in range(nb_aircraft):
@@ -86,6 +112,14 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             print("For aircraft {} we have {} flights".format(
                 aircraft, flights_per_aircraft[aircraft]))
         first_flight = True
+        current_minute_last_maintenance = {}
+        for maintenance in minute_last_maintenance:
+            current_minute_last_maintenance[maintenance] = minute_last_maintenance[maintenance][aircraft]
+
+        if verbose:
+            print("For aircraft {} the current counter is {} for a maximum of {}".format(
+                aircraft, current_minute_last_maintenance['7DAY'], flights_per_aircraft[aircraft]))
+
         for i in range(flights_per_aircraft[aircraft]):
             # we define a length of the flight, multiply by 60 to convert from minute to second (EPOCH)
             length_fly = truncated_norm(min_length_flight, max_length_flight,
@@ -139,40 +173,58 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
+
             else:
                 # we recover the previous fligth (last added)
                 previous = flights[-1]
                 start_airport = previous.end_airport
+
+                # first we add maintenance if needed
+                usage_aircraft = current_minute_last_maintenance["7DAY"] / limit_minute_last_maintenance['7DAY']
+                # we start putting maintenance after 50% usage
+                # but anyway if usage reach 90%, we put it
+                if usage_aircraft > 0.5 or usage_aircraft > 0.9:
+                    probability_add_maintenance = usage_aircraft + random.random()
+                    if probability_add_maintenance >= 1 or usage_aircraft > 0.9:
+                        # we get an airport to perform the maintenance and we modify the end airport of the previous flight
+                        # we need to ensure that the start and end airport of the previous start doesn't end up being the same
+                        all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["7DAY"] if x != previous.start_airport]
+                        airport_maintenance = random.sample(all_airports_except_start)
+                        id = len(flights) + 1
+                        maintenance = Maintenance(id, previous.end_date, airport_maintenance, aircraft)
+                        flights.append(maintenance)
+                        current_minute_last_maintenance["7DAY"] = 0
+
                 if long and not short and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport:
-                        end_airport == nb_airport + 1
+                        end_airport = nb_airport + 1
                     else:
-                        end_airport == nb_airport
+                        end_airport = nb_airport
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start + long_ground_time * 60
                 elif long and short and aircraft == nb_aircraft - 2:
                     if start_airport == nb_airport:
-                        end_airport == nb_airport + 1
+                        end_airport = nb_airport + 1
                     else:
-                        end_airport == nb_airport
+                        end_airport = nb_airport
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start + long_ground_time * 60
                 elif short and not long and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport:
-                        end_airport == nb_airport + 1
+                        end_airport = nb_airport + 1
                     else:
-                        end_airport == nb_airport
+                        end_airport = nb_airport
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start - short_violation * 60
                     solution_tat_cost += tat_cost
                 elif short and long and aircraft == nb_aircraft - 1:
                     if start_airport == nb_airport + 2:
-                        end_airport == nb_airport + 3
+                        end_airport = nb_airport + 3
                     else:
-                        end_airport == nb_airport + 2
+                        end_airport = nb_airport + 2
                     minimal_legal_start = previous.end_date + (previous.tat *
                                                                60)
                     start_date = minimal_legal_start - short_violation * 60
@@ -197,6 +249,11 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                                           end_airport)]
                     length_fly = previously_created.length_fly
                     tat = previously_created.tat
+
+                # we update maintenance counter
+                for maintenance in minute_last_maintenance:
+                    current_minute_last_maintenance[maintenance] += length_fly
+
             # we start the index at 1
             id = len(flights) + 1
             flight_object = models.Flight(id, start_date, length_fly,
