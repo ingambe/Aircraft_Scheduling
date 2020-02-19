@@ -60,11 +60,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                        sb_cost=default_sb_cost):
     ''' This function generate a Solution model '''
 
-    # all the flight created and allocated to an aircraft
+    # all the flight created and allocated to an aircraft (include the maintenance)
     flights = []
-
-    # all maintenances created and allocated to an aircraft
-    maintenances = []
 
     if long:
         nb_aircraft += 1
@@ -84,11 +81,10 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     # here we store the start counter of the aircraft maintenance
     minute_last_maintenance = {}
     MINUTES_7DAYS = 10080
-    # we leave at least one day, to avoid having the aicraft already overused
+    # we leave at least one day, to avoid having the aircraft already overused
     minute_last_maintenance['7DAY'] = [truncated_norm(
-            0, MINUTES_7DAYS - (MINUTES_7DAYS / 7),
-            MINUTES_7DAYS / 2, MINUTES_7DAYS / 7) for i in range(nb_aircraft)]
-
+        0, MINUTES_7DAYS - (MINUTES_7DAYS / 7),
+           MINUTES_7DAYS / 2, MINUTES_7DAYS / 7) for i in range(nb_aircraft)]
 
     # here we store the maintenance limits
     limit_minute_last_maintenance = {}
@@ -96,9 +92,9 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
 
     # here we store the length of the maintenance
     LENGTH_MIN_MAINTENANCE = {}
-    LENGTH_MIN_MAINTENANCE["7DAY"] = 240 # 4hours
+    LENGTH_MIN_MAINTENANCE["7DAY"] = 240  # 4hours
 
-    # here we store the airport of the maintenances
+    # here we store the airport of the maintenance
     AIRPORTS_MAINTENANCE = {}
     AIRPORTS_MAINTENANCE["7DAY"] = [1, 2, 3]
 
@@ -157,9 +153,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
                 else:
-                    if verbose:
-                        print("First flight of aircraft {}, is {} - {}".format(
-                            i, start_airport, end_airport))
+
                     start_airport = truncated_norm(1, nb_airport,
                                                    math.ceil(nb_airport / 2),
                                                    math.ceil(nb_airport / 4))
@@ -168,8 +162,11 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         truncated_norm(1, nb_airport - 1,
                                        math.ceil((nb_airport - 1) / 2),
                                        math.ceil((nb_airport - 1) / 4)))
-                    # multiply by 60 to convert from minute to second (epoch is in second)
-                    # this allow to have a normal distribution between the flight end a time now and the flight start at time now
+                    if verbose:
+                        print("First flight of aircraft {}, is {} - {}".format(
+                            i, start_airport, end_airport))
+                    # multiply by 60 to convert from minute to second (epoch is in second) this allow to have a 
+                    # normal distribution between the flight end a time now and the flight start at time now 
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
@@ -186,12 +183,15 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 if usage_aircraft > 0.5 or usage_aircraft > 0.9:
                     probability_add_maintenance = usage_aircraft + random.random()
                     if probability_add_maintenance >= 1 or usage_aircraft > 0.9:
-                        # we get an airport to perform the maintenance and we modify the end airport of the previous flight
-                        # we need to ensure that the start and end airport of the previous start doesn't end up being the same
-                        all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["7DAY"] if x != previous.start_airport]
+                        # we get an airport to perform the maintenance and we modify the end airport of the previous
+                        # flight we need to ensure that the start and end airport of the previous start doesn't end
+                        # up being the same
+                        all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["7DAY"] if
+                                                     x != previous.start_airport]
                         airport_maintenance = random.sample(all_airports_except_start)
-                        id = len(flights) + 1
-                        maintenance = Maintenance(id, previous.end_date, airport_maintenance, aircraft)
+                        flight_id = len(flights) + 1
+                        maintenance = Maintenance(flight_id, previous.end_date, LENGTH_MIN_MAINTENANCE["7DAY"],
+                                                  airport_maintenance, aircraft)
                         flights.append(maintenance)
                         current_minute_last_maintenance["7DAY"] = 0
 
@@ -244,7 +244,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     if verbose:
                         print(
                             "The flight {} - {} has already been added to the database, we retrive the info"
-                            .format(start_airport, end_airport))
+                                .format(start_airport, end_airport))
                     previously_created = flights_created[(start_airport,
                                                           end_airport)]
                     length_fly = previously_created.length_fly
@@ -255,8 +255,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     current_minute_last_maintenance[maintenance] += length_fly
 
             # we start the index at 1
-            id = len(flights) + 1
-            flight_object = models.Flight(id, start_date, length_fly,
+            flight_id = len(flights) + 1
+            flight_object = models.Flight(flight_id, start_date, length_fly,
                                           start_airport, end_airport, aircraft,
                                           tat)
             # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
@@ -437,7 +437,10 @@ def main():
             min_tat = int(input("Min TAT between two flights : "))
             max_tat = int(input("Max TAT between two flights : "))
         # get the maximum time on ground between two flight (after TAT)
-        if args.meanGroundTime != None and args.varGroundTime != None and args.minGroundTime != None and args.maxGroundTime != None:
+        if args.meanGroundTime is not None and \
+                args.varGroundTime is not None and \
+                args.minGroundTime is not None and \
+                args.maxGroundTime is not None:
             mean_on_ground = args.meanGroundTime
             var_on_ground = args.varGroundTime
             min_on_ground = args.minGroundTime
@@ -486,8 +489,7 @@ def gannt(solution):
     df = pd.DataFrame(
         data, columns=["Task", "Start", "Finish", "Resource", "Complete"])
     colors = [
-        tuple([random.random() for i in range(3)])
-        for i in range(solution.nb_airport)
+        tuple([random.random() for i in range(3)]) for i in range(solution.nb_airport)
     ]
     fig = ff.create_gantt(df, colors=colors, group_tasks=True)
     # we need to create label for displaying the start and end airport
@@ -518,13 +520,13 @@ def gannt(solution):
                     '%Y-%m-%d %H:%M:%S',
                     time.localtime(flight.end_date + flight.tat * 60))
             ],
-                       y=[
-                           solution.nb_aircraft - flight.assigned_aircraft - 1,
-                           solution.nb_aircraft - flight.assigned_aircraft - 1
-                       ],
-                       mode="lines",
-                       line=go.scatter.Line(color="black"),
-                       showlegend=False))
+                y=[
+                    solution.nb_aircraft - flight.assigned_aircraft - 1,
+                    solution.nb_aircraft - flight.assigned_aircraft - 1
+                ],
+                mode="lines",
+                line=go.scatter.Line(color="black"),
+                showlegend=False))
     fig.show()
 
 
