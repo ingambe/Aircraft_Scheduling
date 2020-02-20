@@ -15,6 +15,7 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, 'instance_generator')))
 import route_gen
 
+
 def main():
     '''
     The algorithm for benchmark works as follow:
@@ -63,7 +64,7 @@ def main():
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
             call = json_answers["Call"][-1]
             # if it's not an intermediate call (needed for incremental grouding)
-            if args.no_check == None:
+            if args.no_check is None:
                 answer = call["Witnesses"][-1]
                 # we append "" just to get the last . when we join latter
                 answer = answer["Value"] + [""]
@@ -92,5 +93,6 @@ def main():
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
     df.to_csv("results/" + date_string + ".csv")
 
-if __name__== "__main__":
-      main()
+
+if __name__ == "__main__":
+    main()
