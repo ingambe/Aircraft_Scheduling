@@ -15,8 +15,6 @@ import models
 import argparse
 from default_parameters import *
 
-from instance_generator.models.Maintenance import Maintenance
-
 
 def injective_airport(start, end):
     ''' Injective function to map [0, nb_airport] -> [0, nb_airport]\start '''
@@ -124,7 +122,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             # we compute the tat
             tat = truncated_norm(min_tat, max_tat, mean_tat, var_tat)
 
-            # for the first flight, the start airport is to be choosed between [0, nb_airport]
+            # for the first flight, the start airport is to be chosen between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
             if first_flight:
                 if long and not short and aircraft == nb_aircraft - 1:
@@ -170,9 +168,16 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
-
+                # we start the index at 1
+                flight_id = len(flights) + 1
+                flight_object = models.Flight(flight_id, start_date, length_fly,
+                                                  start_airport, end_airport, aircraft,
+                                                  tat)
+                first_flight_aircraft[aircraft] = flight_object
+                flights.append(flight_object)
+                first_flight = False
             else:
-                # we recover the previous fligth (last added)
+                # we recover the previous flight (last added)
                 previous = flights[-1]
                 start_airport = previous.end_airport
 
@@ -188,83 +193,84 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         # up being the same
                         all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["7DAY"] if
                                                      x != previous.start_airport]
-                        airport_maintenance = random.sample(all_airports_except_start)
+                        airport_maintenance = random.choice(all_airports_except_start)
                         flight_id = len(flights) + 1
-                        maintenance = Maintenance(flight_id, previous.end_date, LENGTH_MIN_MAINTENANCE["7DAY"],
-                                                  airport_maintenance, aircraft)
+                        maintenance = models.Maintenance(flight_id, previous.end_date, LENGTH_MIN_MAINTENANCE["7DAY"],
+                                                         airport_maintenance, aircraft)
                         flights.append(maintenance)
                         current_minute_last_maintenance["7DAY"] = 0
+                        # we don't count the maintenance in the flights counter
+                        i -= 1
 
-                if long and not short and aircraft == nb_aircraft - 1:
-                    if start_airport == nb_airport:
-                        end_airport = nb_airport + 1
-                    else:
-                        end_airport = nb_airport
-                    minimal_legal_start = previous.end_date + (previous.tat *
-                                                               60)
-                    start_date = minimal_legal_start + long_ground_time * 60
-                elif long and short and aircraft == nb_aircraft - 2:
-                    if start_airport == nb_airport:
-                        end_airport = nb_airport + 1
-                    else:
-                        end_airport = nb_airport
-                    minimal_legal_start = previous.end_date + (previous.tat *
-                                                               60)
-                    start_date = minimal_legal_start + long_ground_time * 60
-                elif short and not long and aircraft == nb_aircraft - 1:
-                    if start_airport == nb_airport:
-                        end_airport = nb_airport + 1
-                    else:
-                        end_airport = nb_airport
-                    minimal_legal_start = previous.end_date + (previous.tat *
-                                                               60)
-                    start_date = minimal_legal_start - short_violation * 60
-                    solution_tat_cost += tat_cost
-                elif short and long and aircraft == nb_aircraft - 1:
-                    if start_airport == nb_airport + 2:
-                        end_airport = nb_airport + 3
-                    else:
-                        end_airport = nb_airport + 2
-                    minimal_legal_start = previous.end_date + (previous.tat *
-                                                               60)
-                    start_date = minimal_legal_start - short_violation * 60
-                    solution_tat_cost += tat_cost
                 else:
-                    end_airport = injective_airport(
-                        start_airport,
-                        truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2,
-                                       (nb_airport - 1) / 4))
-                    minimal_legal_start = previous.end_date + (previous.tat *
-                                                               60)
-                    start_date = minimal_legal_start + truncated_norm(
-                        min_on_ground, max_on_ground, mean_on_ground,
-                        var_on_ground) * 60
-                # if we already got a flight starting from A to B, we get back the length of fly and TAT
-                if (start_airport, end_airport) in flights_created:
-                    if verbose:
-                        print(
-                            "The flight {} - {} has already been added to the database, we retrieve the info".format(start_airport, end_airport))
-                    previously_created = flights_created[(start_airport,
-                                                          end_airport)]
-                    length_fly = previously_created.length_fly
-                    tat = previously_created.tat
 
-                # we update maintenance counter
-                for maintenance in minute_last_maintenance:
-                    current_minute_last_maintenance[maintenance] += length_fly
+                    if long and not short and aircraft == nb_aircraft - 1:
+                        if start_airport == nb_airport:
+                            end_airport = nb_airport + 1
+                        else:
+                            end_airport = nb_airport
+                        minimal_legal_start = previous.end_date + (previous.tat *
+                                                                   60)
+                        start_date = minimal_legal_start + long_ground_time * 60
+                    elif long and short and aircraft == nb_aircraft - 2:
+                        if start_airport == nb_airport:
+                            end_airport = nb_airport + 1
+                        else:
+                            end_airport = nb_airport
+                        minimal_legal_start = previous.end_date + (previous.tat *
+                                                                   60)
+                        start_date = minimal_legal_start + long_ground_time * 60
+                    elif short and not long and aircraft == nb_aircraft - 1:
+                        if start_airport == nb_airport:
+                            end_airport = nb_airport + 1
+                        else:
+                            end_airport = nb_airport
+                        minimal_legal_start = previous.end_date + (previous.tat *
+                                                                   60)
+                        start_date = minimal_legal_start - short_violation * 60
+                        solution_tat_cost += tat_cost
+                    elif short and long and aircraft == nb_aircraft - 1:
+                        if start_airport == nb_airport + 2:
+                            end_airport = nb_airport + 3
+                        else:
+                            end_airport = nb_airport + 2
+                        minimal_legal_start = previous.end_date + (previous.tat *
+                                                                   60)
+                        start_date = minimal_legal_start - short_violation * 60
+                        solution_tat_cost += tat_cost
+                    else:
+                        end_airport = injective_airport(
+                            start_airport,
+                            truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2,
+                                           (nb_airport - 1) / 4))
+                        minimal_legal_start = previous.end_date + (previous.tat *
+                                                                   60)
+                        start_date = minimal_legal_start + truncated_norm(
+                            min_on_ground, max_on_ground, mean_on_ground,
+                            var_on_ground) * 60
+                    # if we already got a flight starting from A to B, we get back the length of fly and TAT
+                    if (start_airport, end_airport) in flights_created:
+                        if verbose:
+                            print(
+                                "The flight {} - {} has already been added to the database, we "
+                                "retrieve the info".format(start_airport, end_airport))
+                        previously_created = flights_created[(start_airport,
+                                                              end_airport)]
+                        length_fly = previously_created.length_fly
+                        tat = previously_created.tat
 
-            # we start the index at 1
-            flight_id = len(flights) + 1
-            flight_object = models.Flight(flight_id, start_date, length_fly,
-                                          start_airport, end_airport, aircraft,
-                                          tat)
-            # we add the flight to the first flight assigned to each aircraft if it's the first flight of the aircraft
-            if first_flight:
-                first_flight_aircraft[aircraft] = flight_object
-            flights.append(flight_object)
-            first_flight = False
-            if not (start_airport, end_airport) in flights_created:
-                flights_created[(start_airport, end_airport)] = flight_object
+                    # we update maintenance counter
+                    for maintenance in minute_last_maintenance:
+                        current_minute_last_maintenance[maintenance] += length_fly
+
+                    # we start the index at 1
+                    flight_id = len(flights) + 1
+                    flight_object = models.Flight(flight_id, start_date, length_fly,
+                                                  start_airport, end_airport, aircraft,
+                                                  tat)
+                    if not (start_airport, end_airport) in flights_created:
+                        flights_created[(start_airport, end_airport)] = flight_object
+
     solution = models.Solution(nb_aircraft, nb_airport, flights,
                                first_flight_aircraft, tat_cost, sb_cost, solution_tat_cost)
     if long:
@@ -350,8 +356,7 @@ def main():
     parser.add_argument(
         '--default',
         action='store_true',
-        help=
-        "This generate instances with default value for the previously listed arguments"
+        help="This generate instances with default value for the previously listed arguments"
     )
 
     parser.add_argument('--gannt',
@@ -366,8 +371,7 @@ def main():
     parser.add_argument(
         '--force_long',
         action='store_true',
-        help=
-        "Force to have a long ground time flight by having two specific aircraft"
+        help="Force to have a long ground time flight by having two specific aircraft"
     )
     parser.add_argument('--long_minutes_ground_time',
                         type=int,
@@ -413,21 +417,22 @@ def main():
             max_length_flight = int(
                 input("Max length of the flights (still in minutes) : "))
         # information about number of flight to aircraft
-        if args.meanFlightAircraft != None and args.varFlightAircraft != None and args.minFlightAircraft != None and args.maxFlightAircraft != None:
+        if args.meanFlightAircraft is not None and args.varFlightAircraft is not None and \
+                args.minFlightAircraft is not None and args.maxFlightAircraft is not None:
             mean_flight_per_aircraft = args.meanFlightAircraft
             var_flight_per_aircraft = args.varFlightAircraft
             min_flight_per_aircraft = args.minFlightAircraft
             max_flight_per_aircraft = args.maxFlightAircraft
         else:
-            mean_flight_per_aircraft = int(input("Mean flight per aicraft : "))
+            mean_flight_per_aircraft = int(input("Mean flight per aircraft : "))
             var_flight_per_aircraft = int(
-                input("Variance flight per aicraft : "))
-            min_flight_per_aircraft = int(input("Min flight per aicraft : "))
-            max_flight_per_aircraft = int(input("Max flight per aicraft : "))
+                input("Variance flight per aircraft : "))
+            min_flight_per_aircraft = int(input("Min flight per aircraft : "))
+            max_flight_per_aircraft = int(input("Max flight per aircraft : "))
         # information about TAT (Turn Around Time) between two flights
-        if args.meanTat is not None and\
-                args.varTat is not None and\
-                args.minTat is not None and\
+        if args.meanTat is not None and \
+                args.varTat is not None and \
+                args.minTat is not None and \
                 args.maxTat is not None:
             mean_tat = args.meanTat
             var_tat = args.varTat

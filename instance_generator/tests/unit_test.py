@@ -20,8 +20,8 @@ def test_flight_properties():
         assert flight.start_date < flight.end_date, "test failed, end is before start"
         assert flight.start_airport != flight.end_airport, "test failed, airport of start and end are the same"
         assert flight.start_date + flight.length_fly == flight.end_date, "test failed, problem when we have computed the lenght of the flight"
-        assert flight.length_fly <= default_max_length_flight * 60, "test failed, we exceed the maximum lenght of flight"
-        assert flight.length_fly >= default_min_length_flight * 60, "test failed, we are below the minimum lenght of flight"
+        assert flight.length_fly <= default_max_length_flight, "test failed, we exceed the maximum lenght of flight"
+        assert flight.length_fly >= default_min_length_flight, "test failed, we are below the minimum lenght of flight"
         assert flight.tat <= default_max_tat, "test failed, we exceed the maximum lenght of tat"
         assert flight.tat >= default_min_tat, "test failed, we are below the minimum lenght of tat"
 
@@ -42,8 +42,8 @@ def test_coherence_solution():
             assert current_flight.assigned_aircraft == aircraft, "test failed, problem during flight of aircraft storage, aircraft are swapped"
             assert current_flight.end_airport == next_flight.start_airport, "test failed, the end airport of the first is not the same as the start of the second one"
             time_on_ground = next_flight.start_date - (current_flight.end_date + current_flight.tat)
-            assert time_on_ground >= default_min_on_ground * 60, "test fail, too little time on ground"
-            assert time_on_ground <= default_max_on_ground * 60, "test fail, too much time on ground"
+            assert time_on_ground >= default_min_on_ground, "test fail, too little time on ground"
+            assert time_on_ground <= default_max_on_ground, "test fail, too much time on ground"
         assert len(flight_of_aircraft) <= default_max_flight_per_aicraft, "test failed, we exceed the maximum limit of flight per aircraft"
         assert len(flight_of_aircraft) >= default_min_flight_per_aicraft, "test failed, we are below the minimum limit of flight per aircraft"
 

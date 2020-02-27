@@ -1,4 +1,4 @@
-from instance_generator.models import Flight
+from .Flight import Flight
 
 
 class Maintenance(Flight):
