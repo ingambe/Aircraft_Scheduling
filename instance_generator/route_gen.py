@@ -356,16 +356,16 @@ def main():
         # information about number of flight to aircraft
         if args.meanFlightAircraft is not None and args.varFlightAircraft is not None \
                 and args.minFlightAircraft is not None and args.maxFlightAircraft is not None:
-            mean_flight_per_aicraft = args.meanFlightAircraft
-            var_flight_per_aicraft = args.varFlightAircraft
-            min_flight_per_aicraft = args.minFlightAircraft
-            max_flight_per_aicraft = args.maxFlightAircraft
+            mean_flight_per_aircraft = args.meanFlightAircraft
+            var_flight_per_aircraft = args.varFlightAircraft
+            min_flight_per_aircraft = args.minFlightAircraft
+            max_flight_per_aircraft = args.maxFlightAircraft
         else:
-            mean_flight_per_aicraft = int(input("Mean flight per aicraft : "))
-            var_flight_per_aicraft = int(
+            mean_flight_per_aircraft = int(input("Mean flight per aicraft : "))
+            var_flight_per_aircraft = int(
                 input("Variance flight per aicraft : "))
-            min_flight_per_aicraft = int(input("Min flight per aicraft : "))
-            max_flight_per_aicraft = int(input("Max flight per aicraft : "))
+            min_flight_per_aircraft = int(input("Min flight per aicraft : "))
+            max_flight_per_aircraft = int(input("Max flight per aicraft : "))
         # information about TAT (Turn Around Time) between two flights
         if args.meanTat is not None and args.varTat is not None and args.minTat is not None and args.maxTat is not None:
             mean_tat = args.meanTat
@@ -405,9 +405,9 @@ def main():
                     "Max time on ground between two flights (in minutes) : "))
         solution = instance_generator(
             nb_aircraft, nb_airport, mean_length_flight, var_length_flight,
-            min_length_flight, max_length_flight, mean_flight_per_aicraft,
-            var_flight_per_aicraft, min_flight_per_aicraft,
-            max_flight_per_aicraft, mean_tat, var_tat, min_tat, max_tat,
+            min_length_flight, max_length_flight, mean_flight_per_aircraft,
+            var_flight_per_aircraft, min_flight_per_aircraft,
+            max_flight_per_aircraft, mean_tat, var_tat, min_tat, max_tat,
             mean_on_ground, var_on_ground, min_on_ground, max_on_ground,
             args.verbose, args.force_long, args.long_minutes_ground_time)
 

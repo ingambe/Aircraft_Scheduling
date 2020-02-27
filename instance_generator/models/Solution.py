@@ -3,15 +3,15 @@ class Solution(object):
         self.nb_aircraft = nb_aircraft
         self.nb_airport = nb_airport
         self.flights = fligths
-        self.first_fligth_aircraft = first_fligth_aircraft
+        self.first_flight_aircraft = first_fligth_aircraft
         self.tat_cost = tat_cost
         self.sb_cost = sb_cost
         self.solution_tat_cost = solution_tat_cost
         self.solution_cost = solution_tat_cost
         # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
-        self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
+        self.flight_of_aircraft = [[] for _ in range(self.nb_aircraft)]
         for flight in self.flights:
-           self.flight_of_aircraft[flight.assigned_aircraft].append(flight)
+            self.flight_of_aircraft[flight.assigned_aircraft].append(flight)
 
     def __repr__(self):
         result = ""
@@ -22,8 +22,8 @@ class Solution(object):
         result += "airport(1..{}).\n".format(self.nb_airport)
         result += "flight(1..{}).\n".format(len(self.flights))
         # we now print for each aircraft is first flight
-        for aircraft in range(len(self.first_fligth_aircraft)):
-            flight = self.first_fligth_aircraft[aircraft]
+        for aircraft in range(len(self.first_flight_aircraft)):
+            flight = self.first_flight_aircraft[aircraft]
             # +1 because we count aircraft starting from 1 and not 0
             result += "first({}, {}). ".format(flight.id, aircraft + 1)
         result += "\n"

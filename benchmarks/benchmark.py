@@ -6,11 +6,12 @@ import subprocess
 import json
 from os.path import isfile, join, basename
 import time
-import pandas as pd 
+import pandas as pd
 from datetime import datetime
 import tempfile
 
 import sys
+
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, 'instance_generator')))
 import route_gen
@@ -34,7 +35,8 @@ def main():
     '''
     parser = argparse.ArgumentParser(description='Benchmark ! :D')
     parser.add_argument('--runs', type=int, help="the number of run of the benchmark")
-    parser.add_argument('--no_check', action='store_true', help="if we don't want to check the solution (in case of optimization problem)")
+    parser.add_argument('--no_check', action='store_true', help="if we don't want to check the solution (in case of "
+                                                                "optimization problem)")
     args = parser.parse_args()
     number_of_run = args.runs
     print("Start of the benchmarks")
@@ -51,15 +53,17 @@ def main():
         instance_temp.write(repr(instance))
         for encoding in encodings:
             print("Encoding {}:".format(encoding))
-            files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if isfile(join("../encoding/" + encoding, f))]
+            files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if
+                              isfile(join("../encoding/" + encoding, f))]
             start = time.time()
-            clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"],
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (stdoutdata, stderrdata) = clingo.communicate()
             clingo.wait()
             end = time.time()
             duration = end - start
-            #print("out: {}".format(stdoutdata))
-            #print("error: {}".format(stderrdata))
+            # print("out: {}".format(stdoutdata))
+            # print("error: {}".format(stderrdata))
             json_answers = json.loads(stdoutdata)
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
             call = json_answers["Call"][-1]
@@ -71,13 +75,16 @@ def main():
                 answer_str = ".".join(answer)
                 answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
                 answer_temp.write(answer_str)
-                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                clingo_check = subprocess.Popen(
+                    ["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [
+                        basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
-                #print("stdoudata check : {}".format(stdoutdata_check))
+                # print("stdoudata check : {}".format(stdoutdata_check))
                 json_check = json.loads(stdoutdata_check)
                 answer_temp.close()
                 os.remove(answer_temp.name)
-                if not json_check["Result"] == "SATISFIABLE": 
+                if not json_check["Result"] == "SATISFIABLE":
                     correct_solution = False
             if correct_solution:
                 result_iteration[encoding] = duration
