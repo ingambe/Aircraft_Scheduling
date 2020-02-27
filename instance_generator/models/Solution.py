@@ -1,5 +1,5 @@
 class Solution(object):
-    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost, solution_tat_cost):
+    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost, solution_tat_cost, unique_flights):
         self.nb_aircraft = nb_aircraft
         self.nb_airport = nb_airport
         self.flights = fligths
@@ -8,6 +8,7 @@ class Solution(object):
         self.sb_cost = sb_cost
         self.solution_tat_cost = solution_tat_cost
         self.solution_cost = solution_tat_cost
+        self.unique_flights = unique_flights
         # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
         self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
         for flight in self.flights:

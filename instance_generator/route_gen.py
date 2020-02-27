@@ -120,7 +120,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                         mean_length_flight,
                                         var_length_flight) * 60
             # we compute the tat
-            tat = truncated_norm(min_tat, max_tat, mean_tat, var_tat)
+            tat = truncated_norm(min_tat, max_tat, mean_tat, var_tat) * 60
 
             # for the first flight, the start airport is to be chosen between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
@@ -173,6 +173,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 flight_object = models.Flight(flight_id, start_date, length_fly,
                                                   start_airport, end_airport, aircraft,
                                                   tat)
+                if not (start_airport, end_airport) in flights_created:
+                    flights_created[(start_airport, end_airport)] = flight_object
                 first_flight_aircraft[aircraft] = flight_object
                 flights.append(flight_object)
                 first_flight = False
@@ -180,7 +182,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 # we recover the previous flight (last added)
                 previous = flights[-1]
                 start_airport = previous.end_airport
-
+                #usage_aircraft = 0
                 # first we add maintenance if needed
                 usage_aircraft = current_minute_last_maintenance["7DAY"] / limit_minute_last_maintenance['7DAY']
                 # we start putting maintenance after 50% usage
@@ -195,7 +197,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                                      x != previous.start_airport]
                         airport_maintenance = random.choice(all_airports_except_start)
                         flight_id = len(flights) + 1
-                        maintenance = models.Maintenance(flight_id, previous.end_date, LENGTH_MIN_MAINTENANCE["7DAY"],
+                        length_maintenance = LENGTH_MIN_MAINTENANCE["7DAY"] * 60
+                        maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
                                                          airport_maintenance, aircraft)
                         flights.append(maintenance)
                         current_minute_last_maintenance["7DAY"] = 0
@@ -209,24 +212,21 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                             end_airport = nb_airport + 1
                         else:
                             end_airport = nb_airport
-                        minimal_legal_start = previous.end_date + (previous.tat *
-                                                                   60)
+                        minimal_legal_start = previous.end_date + previous.tat
                         start_date = minimal_legal_start + long_ground_time * 60
                     elif long and short and aircraft == nb_aircraft - 2:
                         if start_airport == nb_airport:
                             end_airport = nb_airport + 1
                         else:
                             end_airport = nb_airport
-                        minimal_legal_start = previous.end_date + (previous.tat *
-                                                                   60)
+                        minimal_legal_start = previous.end_date + previous.tat
                         start_date = minimal_legal_start + long_ground_time * 60
                     elif short and not long and aircraft == nb_aircraft - 1:
                         if start_airport == nb_airport:
                             end_airport = nb_airport + 1
                         else:
                             end_airport = nb_airport
-                        minimal_legal_start = previous.end_date + (previous.tat *
-                                                                   60)
+                        minimal_legal_start = previous.end_date + previous.tat
                         start_date = minimal_legal_start - short_violation * 60
                         solution_tat_cost += tat_cost
                     elif short and long and aircraft == nb_aircraft - 1:
@@ -234,8 +234,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                             end_airport = nb_airport + 3
                         else:
                             end_airport = nb_airport + 2
-                        minimal_legal_start = previous.end_date + (previous.tat *
-                                                                   60)
+                        minimal_legal_start = previous.end_date + previous.tat
                         start_date = minimal_legal_start - short_violation * 60
                         solution_tat_cost += tat_cost
                     else:
@@ -243,11 +242,11 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                             start_airport,
                             truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2,
                                            (nb_airport - 1) / 4))
-                        minimal_legal_start = previous.end_date + (previous.tat *
-                                                                   60)
-                        start_date = minimal_legal_start + truncated_norm(
+                        minimal_legal_start = previous.end_date + previous.tat
+                        on_ground_time = truncated_norm(
                             min_on_ground, max_on_ground, mean_on_ground,
                             var_on_ground) * 60
+                        start_date = minimal_legal_start + on_ground_time
                     # if we already got a flight starting from A to B, we get back the length of fly and TAT
                     if (start_airport, end_airport) in flights_created:
                         if verbose:
@@ -270,9 +269,10 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                                                   tat)
                     if not (start_airport, end_airport) in flights_created:
                         flights_created[(start_airport, end_airport)] = flight_object
+                    flights.append(flight_object)
 
     solution = models.Solution(nb_aircraft, nb_airport, flights,
-                               first_flight_aircraft, tat_cost, sb_cost, solution_tat_cost)
+                               first_flight_aircraft, tat_cost, sb_cost, solution_tat_cost, flights_created)
     if long:
         # we have added two airports for the two special long airport
         nb_airport += 2
@@ -486,22 +486,24 @@ def main():
 
 
 def gannt(solution):
-    data = []
+    df = []
     for flight in solution.flights:
-        flight_data = [
-            "Aircraft " + str(flight.assigned_aircraft),
-            datetime.datetime.fromtimestamp(flight.start_date),
-            datetime.datetime.fromtimestamp(flight.end_date),
-            str(flight.start_airport) + " - " + str(flight.end_airport),
-            flight.tat
-        ]
-        data.append(flight_data)
-    df = pd.DataFrame(
-        data, columns=["Task", "Start", "Finish", "Resource", "Complete"])
+        dict_flight = dict()
+        dict_flight["Task"] = "Aircraft " + str(flight.assigned_aircraft)
+        dict_flight["Start"] = datetime.datetime.fromtimestamp(flight.start_date)
+        dict_flight["Finish"] = datetime.datetime.fromtimestamp(flight.end_date)
+        if isinstance(flight, models.Maintenance):
+            dict_flight["Resource"] = "Maintenance"
+        else:
+            dict_flight["Resource"] = str(flight.start_airport) + " - " + str(flight.end_airport)
+        dict_flight["Complete"] = flight.tat
+        df.append(dict_flight)
+
+    # we create a color for each flight + 1 for the maintenance
     colors = [
-        tuple([random.random() for i in range(3)]) for i in range(solution.nb_airport)
+        tuple([random.random() for i in range(3)]) for i in range(len(solution.unique_flights) + 1)
     ]
-    fig = ff.create_gantt(df, colors=colors, group_tasks=True)
+    fig = ff.create_gantt(df, colors=colors, index_col='Resource', group_tasks=True)
     # we need to create label for displaying the start and end airport
     tmp = []
     for flight in solution.flights:
@@ -528,7 +530,7 @@ def gannt(solution):
                               time.localtime(flight.end_date)),
                 time.strftime(
                     '%Y-%m-%d %H:%M:%S',
-                    time.localtime(flight.end_date + flight.tat * 60))
+                    time.localtime(flight.end_date + flight.tat))
             ],
                 y=[
                     solution.nb_aircraft - flight.assigned_aircraft - 1,
