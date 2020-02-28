@@ -22,4 +22,15 @@ violation_tat(V1, V2, T) :- V1 < V2, route(V1, V2), end(V1, T1), start(V2, T2), 
 
 :~ violation_tat(V1, V2, T), cost(tat, C). [C, V1]
 
+{maintenance_after_flight(F, M)} :- flight(F), airport_maintenance(M, A), airport_end(F, A), length_maintenance(M, L), route(F, F2), end(F, T), start(F2, T2), LTIME = T2 - T, L <= LTIME.
+{maintenance_after_flight(F, M)} :- flight(F), airport_maintenance(M, A), airport_end(F, A), not route(F, _).
+
+covered(F2, M) :- first(F1, A), assign(F2, A), start_maintenance_counter(A, M, C), limit_counter(M, L), end(F1, S1), LEFT = L - C, end(F2, S2), B = S2 - S1, B <= LEFT.
+
+covered(F2, M) :- assign(F1, A), end(F1, T1), end(F2, T2), T2 < T1, assign(F2, A), maintenance_after_flight(F2, M), TIME = T1 - T2, limit_counter(M, L), TIME <= L.
+
+:- flight(F), maintenance(M), not covered(F, M).
+
+:~ maintenance_after_flight(F, _). [F]
+
 #show assign/2.
