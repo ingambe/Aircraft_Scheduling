@@ -77,16 +77,16 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     flights_per_aircraft = [0 for i in range(nb_aircraft)]
 
     # here we store the start counter of the aircraft maintenance
-    minute_last_maintenance = {}
-    MINUTES_7DAYS = 10080
+    second_last_maintenance = {}
+    SECONDS_7DAYS = 10080 * 60
     # we leave at least one day, to avoid having the aircraft already overused
-    minute_last_maintenance['7DAY'] = [truncated_norm(
-        0, MINUTES_7DAYS - (MINUTES_7DAYS / 7),
-           MINUTES_7DAYS / 2, MINUTES_7DAYS / 7) for i in range(nb_aircraft)]
+    second_last_maintenance['7DAY'] = [truncated_norm(
+        0, SECONDS_7DAYS - (SECONDS_7DAYS / 7),
+           SECONDS_7DAYS / 2, SECONDS_7DAYS / 7) for i in range(nb_aircraft)]
 
     # here we store the maintenance limits
-    limit_minute_last_maintenance = {}
-    limit_minute_last_maintenance['7DAY'] = MINUTES_7DAYS
+    limit_second_last_maintenance = {}
+    limit_second_last_maintenance['7DAY'] = SECONDS_7DAYS
 
     # here we store the length of the maintenance
     LENGTH_MIN_MAINTENANCE = {}
@@ -106,13 +106,13 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             print("For aircraft {} we have {} flights".format(
                 aircraft, flights_per_aircraft[aircraft]))
         first_flight = True
-        current_minute_last_maintenance = {}
-        for maintenance in minute_last_maintenance:
-            current_minute_last_maintenance[maintenance] = minute_last_maintenance[maintenance][aircraft]
+        current_second_last_maintenance = {}
+        for maintenance in second_last_maintenance:
+            current_second_last_maintenance[maintenance] = second_last_maintenance[maintenance][aircraft]
 
         if verbose:
             print("For aircraft {} the current counter is {} for a maximum of {}".format(
-                aircraft, current_minute_last_maintenance['7DAY'], flights_per_aircraft[aircraft]))
+                aircraft, current_second_last_maintenance['7DAY'], flights_per_aircraft[aircraft]))
 
         for i in range(flights_per_aircraft[aircraft]):
             # we define a length of the flight, multiply by 60 to convert from minute to second (EPOCH)
@@ -184,7 +184,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 start_airport = previous.end_airport
                 #usage_aircraft = 0
                 # first we add maintenance if needed
-                usage_aircraft = current_minute_last_maintenance["7DAY"] / limit_minute_last_maintenance['7DAY']
+                usage_aircraft = current_second_last_maintenance["7DAY"] / limit_second_last_maintenance['7DAY']
                 # we start putting maintenance after 50% usage
                 # but anyway if usage reach 90%, we put it
                 if usage_aircraft > 0.5 or usage_aircraft > 0.9:
@@ -201,7 +201,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
                                                          airport_maintenance, aircraft)
                         flights.append(maintenance)
-                        current_minute_last_maintenance["7DAY"] = 0
+                        current_second_last_maintenance["7DAY"] = 0
                         # we don't count the maintenance in the flights counter
                         i -= 1
 
@@ -258,15 +258,17 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         length_fly = previously_created.length_fly
                         tat = previously_created.tat
 
-                    # we update maintenance counter
-                    for maintenance in minute_last_maintenance:
-                        current_minute_last_maintenance[maintenance] += length_fly
+
 
                     # we start the index at 1
                     flight_id = len(flights) + 1
                     flight_object = models.Flight(flight_id, start_date, length_fly,
                                                   start_airport, end_airport, aircraft,
                                                   tat)
+                    # we update maintenance counter
+                    for maintenance in current_second_last_maintenance:
+                        time_elapsed = flight_object.end_date - previous.end_date
+                        current_second_last_maintenance[maintenance] += time_elapsed
                     if not (start_airport, end_airport) in flights_created:
                         flights_created[(start_airport, end_airport)] = flight_object
                     flights.append(flight_object)
