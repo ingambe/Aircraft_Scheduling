@@ -45,11 +45,11 @@ class Solution(object):
         result += "\n"
         # we add the airport of departure
         for flight in self.flights:
-            result += "airport_start({}, {}). ".format(flight.id, flight.start_airport)
+            result += "airport_start({}, {}). ".format(flight.id, flight.start_airport + 1)
         result += "\n"
         # we add the airport of destination
         for flight in self.flights:
-            result += "airport_end({}, {}). ".format(flight.id, flight.end_airport)
+            result += "airport_end({}, {}). ".format(flight.id, flight.end_airport + 1)
         result += "\n"
         # we add the start date of the flight
         for flight in self.flights:

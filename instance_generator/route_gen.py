@@ -58,7 +58,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                        sb_cost=default_sb_cost):
     ''' This function generate a Solution model '''
 
-    # all the flight created and allocated to an aircraft (include the maintenance)
+    # all the flight and maintenance created and allocated to an aircraft
+    flights_and_maintenances = []
     flights = []
 
     if long:
@@ -99,6 +100,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     AIRPORTS_MAINTENANCE["seven_day"] = [0, 1, 2]
 
     solution_tat_cost = 0
+
+
 
     for aircraft in range(nb_aircraft):
         flights_per_aircraft[aircraft] = truncated_norm(
@@ -179,17 +182,18 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     flights_created[(start_airport, end_airport)] = flight_object
                 first_flight_aircraft[aircraft] = flight_object
                 flights.append(flight_object)
+                flights_and_maintenances.append(flight_object)
                 first_flight = False
             else:
-                # we recover the previous flight (last added)
-                previous = flights[-1]
+                # we recover the previous flight or maintenance
+                previous = flights_and_maintenances[-1]
                 start_airport = previous.end_airport
-                #usage_aircraft = 0
+                usage_aircraft = 0
                 # first we add maintenance if needed
-                usage_aircraft = current_second_last_maintenance["seven_day"] / limit_second_last_maintenance['seven_day']
+                #usage_aircraft = current_second_last_maintenance["seven_day"] / limit_second_last_maintenance['seven_day']
                 # we start putting maintenance after 50% usage
                 # but anyway if usage reach 90%, we put it
-                if usage_aircraft > 0.5 or usage_aircraft > 0.9:
+                if usage_aircraft > 0.5:
                     probability_add_maintenance = usage_aircraft + random.random()
                     if probability_add_maintenance >= 1 or usage_aircraft > 0.9:
                         # we get an airport to perform the maintenance and we modify the end airport of the previous
@@ -202,7 +206,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         length_maintenance = LENGTH_MIN_MAINTENANCE["seven_day"] * 60
                         maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
                                                          airport_maintenance, aircraft)
-                        flights.append(maintenance)
+                        flights_and_maintenances.append(maintenance)
                         current_second_last_maintenance["seven_day"] = 0
                         # we don't count the maintenance in the flights counter
                         i -= 1
@@ -274,6 +278,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     if not (start_airport, end_airport) in flights_created:
                         flights_created[(start_airport, end_airport)] = flight_object
                     flights.append(flight_object)
+                    flights_and_maintenances.append(flight_object)
 
     solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft, tat_cost, sb_cost,
                                solution_tat_cost, flights_created, second_initial_counter, limit_second_last_maintenance, LENGTH_MIN_MAINTENANCE, AIRPORTS_MAINTENANCE)
