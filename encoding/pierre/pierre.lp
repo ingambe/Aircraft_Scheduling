@@ -21,18 +21,21 @@ assign(V2, A) :- assign(V1, A), aircraft(A), route(V1, V2), not first(V2, A).
 violation_tat(V1, V2, T) :- V1 < V2, route(V1, V2), end(V1, T1), start(V2, T2), tat(V1, SEC), T = T1 + SEC - T2, T > 0.
 
 :~ violation_tat(V1, V2, T), cost(tat, C). [C, V1]
-%*
+
 {maintenance_after_flight(F, M)} :- flight(F), airport_maintenance(M, A), airport_end(F, A), length_maintenance(M, L), route(F, F2), end(F, T), start(F2, T2), LTIME = T2 - T, L <= LTIME.
 {maintenance_after_flight(F, M)} :- flight(F), airport_maintenance(M, A), airport_end(F, A), not route(F, _).
 
-covered(F, M) :- first(F, _), maintenance(M).
 
-covered(F2, M) :- first(F1, A), assign(F2, A), start_maintenance_counter(A, M, C), limit_counter(M, L), end(F1, S1), LEFT = L - C, end(F2, S2), B = S2 - S1, B <= LEFT.
+%covered(F1, M) :- first(F1, A), maintenance(M).
 
-covered(F2, M) :- assign(F1, A), end(F1, T1), end(F2, T2), T2 < T1, assign(F2, A), maintenance_after_flight(F2, M), TIME = T1 - T2, limit_counter(M, L), TIME <= L.
+covered(F2, M) :- first(F1, A), assign(F2, A), start_maintenance_counter(M, A, C), limit_counter(M, L), end(F1, S1), LEFT = L - C, end(F2, S2), B = S2 - S1, B <= LEFT.
+
+covered(F2, M) :- assign(F2, A), assign(F1, A), end(F1, T1), end(F2, T2), T1 < T2, maintenance_after_flight(F1, M), TIME = T2 - T1, limit_counter(M, L), TIME <= L.
+%covered(F2, M) :- assign(F1, A), end(F1, T1), end(F2, T2), T2 < T1, assign(F2, A), maintenance_after_flight(F2, M), TIME = T1 - T2, limit_counter(M, L), TIME <= L.
 
 :- flight(F), maintenance(M), not covered(F, M).
 
 :~ maintenance_after_flight(F, _). [F]
-*%
+
+%#show covered/2.
 #show assign/2.

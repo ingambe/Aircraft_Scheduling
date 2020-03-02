@@ -205,6 +205,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         airport_maintenance = random.choice(all_airports_except_start)
                         previous_flight = flights[-1]
                         previous_flight.end_airport = airport_maintenance
+                        previous.end_airport = airport_maintenance
                         flight_id = len(flights) + 1
                         length_maintenance = LENGTH_SEC_MAINTENANCE["seven_day"]
                         maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
