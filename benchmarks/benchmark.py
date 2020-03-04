@@ -63,7 +63,7 @@ def main():
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
             call = json_answers["Call"][-1]
             # if it's not an intermediate call (needed for incremental grouding)
-            if args.no_check == None:
+            if not args.no_check:
                 answer = call["Witnesses"][-1]
                 # we append "" just to get the last . when we join latter
                 answer = answer["Value"] + [""]
