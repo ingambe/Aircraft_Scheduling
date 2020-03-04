@@ -191,7 +191,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 #usage_aircraft = 0
                 # first we add maintenance if needed
                 usage_aircraft = current_second_last_maintenance["seven_day"] / limit_second_last_maintenance['seven_day']
-                print("usage aircraft {}".format(usage_aircraft))
+                #print("usage aircraft {}".format(usage_aircraft))
                 # we start putting maintenance after 50% usage
                 # but anyway if usage reach 90%, we put it
                 if usage_aircraft > 0.5:

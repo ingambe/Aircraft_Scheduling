@@ -9,28 +9,23 @@ def main(prg):
     # for performance only, can be desactivated
     def handle_stop(m):
         #print("Solution cost is {}".format(m.cost[0]))
-        nonlocal solution_cost
-        nonlocal stop
-        # if it's the second time we have the solution cost
-        # or if we don't have cost for our problem
-        # then we stop
-        if m.cost[0] == solution_cost or len(m.cost) == 0:
-            #prg.interrupt()
-            stop = True
-        solution_cost = m.cost[0]
+        nonlocal current_best_solution
+        if m.cost[0] < current_best_solution:
+            current_best_solution = m.cost[0]
 
     istop  = clingo.String("SAT")
 
     i = 0
     ret = None
 
-    solution_cost = -1
+    best_solutions = []
     stop = False
 
-    while (not stop  or (
+    while ((len(best_solutions) < 2 or best_solutions[-2] != best_solutions[-1])  or (
               (istop.string == "SAT"     and not ret.satisfiable) or
               (istop.string == "UNSAT"   and not ret.unsatisfiable) or 
               (istop.string == "UNKNOWN" and not ret.unknown))):
+        current_best_solution = float('inf')
         parts = []
         parts.append(("step", [i]))
         if i == 0:
@@ -38,7 +33,7 @@ def main(prg):
         prg.ground(parts)
         i += 1
         ret = prg.solve(on_model=handle_stop)
-        #ret = prg.solve()
+        best_solutions.append(current_best_solution)
 #end.
 
 #program step(t).
