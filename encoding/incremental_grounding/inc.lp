@@ -7,40 +7,52 @@ import time
 
 def main(prg):
 
+    launched = False
+    to_stop_current_it = False
+
+
     counter = 0
-    stop = False
+
+    best_solution = None
 
     def kill_search():
-        nonlocal stop
         nonlocal counter
+        nonlocal to_stop_current_it
         while counter < 60:
             time.sleep(1)
             counter += 1
-            #print("counter {}".format(counter))
+            print("counter {}".format(counter))
+        to_stop_current_it = True
         prg.interrupt()
-        stop = True
 
     # we stop if we have two time in a row the same cost
-    # for performance only, can be desactivated
+    # for performance only, can be deactivated
     def handle_stop(m):
-        #print("Solution cost is {}".format(m.cost[0]))
         nonlocal current_best_solution
+        nonlocal best_solution
         nonlocal counter
-        nonlocal p
-        if not p.is_alive() and counter < 60:
-            print("OKAY START {}".format(counter))
-            p.start()
-        counter = 0
-        if m.cost[0] < current_best_solution:
-            current_best_solution = m.cost[0]
+        nonlocal to_stop_current_it
+        if not to_stop_current_it:
+            if m.cost[0] < current_best_solution:
+                current_best_solution = m.cost[0]
+                best_solution = m
+            counter = 0
+            if not p.is_alive():
+                print("OKAY START")
+                p.start()
+                launched = True
 
     i = 0
     ret = None
 
     best_solutions = []
     p = Thread(target=kill_search)
-    while ((len(best_solutions) < 2 or best_solutions[-2] != best_solutions[-1])  or not ret.satisfiable) and not stop:
+    while ((len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1])  or not ret.satisfiable):
+        p = Thread(target=kill_search)
+        to_stop_current_it = False
+        launched = False
         counter = 0
+        stop = False
         current_best_solution = float('inf')
         parts = []
         parts.append(("step", [i]))
