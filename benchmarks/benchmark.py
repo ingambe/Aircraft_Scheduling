@@ -42,9 +42,11 @@ def main():
     for encoding in encodings:
         print("\t-{}".format(encoding))
     results = []
+    costs_run = []
     for i in range(number_of_run):
         print("Iteration {}".format(i + 1))
         result_iteration = dict()
+        cost_iteration = dict()
         instance = route_gen.instance_generator()
         instance_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
         instance_temp.write(repr(instance))
@@ -62,6 +64,7 @@ def main():
             json_answers = json.loads(stdoutdata)
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
             call = json_answers["Call"][-1]
+            cost = call["Costs"][0]
             # if it's not an intermediate call (needed for incremental grouding)
             if not args.no_check:
                 answer = call["Witnesses"][-1]
@@ -80,17 +83,24 @@ def main():
                     correct_solution = False
             if correct_solution:
                 result_iteration[encoding] = duration
+                cost_iteration[encoding] = cost
             else:
                 result_iteration[encoding] = sys.maxsize
+                cost_iteration[encoding] = float("inf")
             print("\tSatisfiable {}".format(correct_solution))
             print("\tDuration {} seconds".format(result_iteration[encoding]))
+            print("\tBest solution {}".format(cost))
         results.append(result_iteration)
+        costs_run.append(cost_iteration)
         instance_temp.close()
         os.remove(instance_temp.name)
     df = pd.DataFrame(results)
     now = datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
     df.to_csv("results/" + date_string + ".csv")
+    # we also print the cost
+    df = pd.DataFrame(costs_run)
+    df.to_csv("results/" + date_string + "_costs.csv")
 
 if __name__== "__main__":
       main()
