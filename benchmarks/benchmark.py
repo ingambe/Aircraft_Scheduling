@@ -48,7 +48,7 @@ def main():
         result_iteration = dict()
         cost_iteration = dict()
         instance = route_gen.instance_generator()
-        instance_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+        instance_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=True)
         instance_temp.write(repr(instance))
         for encoding in encodings:
             print("Encoding {}:".format(encoding))
@@ -93,7 +93,7 @@ def main():
         results.append(result_iteration)
         costs_run.append(cost_iteration)
         instance_temp.close()
-        os.remove(instance_temp.name)
+        #os.remove(instance_temp.name)
     df = pd.DataFrame(results)
     now = datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")

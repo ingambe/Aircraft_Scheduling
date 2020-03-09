@@ -16,6 +16,6 @@
 :- flight(V), #count{A : assign(V, A)} > 1.
 :- flight(V), #count{A : assign(V, A)} < 1.
 
-:- max_solution_tat_cost(X), cost(tat, C), K = #count{V : violation_tat(V, _, _)}, X < K * C.
+%:- max_solution_tat_cost(X), cost(tat, C), K = #count{V : violation_tat(V, _, _)}, X < K * C.
 
 #show .

@@ -18,6 +18,7 @@ def main(prg):
         if len(m.cost) > 0:
             if timer.is_alive():
                 timer.cancel()
+                #time.wait(1)
                 timer.join()
             timer = threading.Timer(60.0, prg.interrupt)
             if m.cost[0] < current_best_solution:
@@ -32,7 +33,7 @@ def main(prg):
     ret = None
     best_solutions = []
     all_time_best = [None, float('inf')]
-    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable):
+    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable) and i < 1000:
         timer = threading.Timer(60.0, prg.interrupt)
         current_best_solution = float('inf')
         parts = []
@@ -47,9 +48,6 @@ def main(prg):
             timer.cancel()
             timer.join()
     time.wait(1)
-    if timer.is_alive():
-        timer.cancel()
-        timer.join()
     print(all_time_best[0])
 #end.
 
