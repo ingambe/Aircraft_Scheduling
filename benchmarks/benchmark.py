@@ -64,10 +64,10 @@ def main():
             json_answers = json.loads(stdoutdata)
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
             call = json_answers["Call"][-1]
-            cost = call["Costs"][0]
+            answer = call["Witnesses"][-1]
+            cost = answer["Costs"][0]
             # if it's not an intermediate call (needed for incremental grouding)
             if not args.no_check:
-                answer = call["Witnesses"][-1]
                 # we append "" just to get the last . when we join latter
                 answer = answer["Value"] + [""]
                 answer_str = ".".join(answer)
@@ -101,6 +101,7 @@ def main():
     # we also print the cost
     df = pd.DataFrame(costs_run)
     df.to_csv("results/" + date_string + "_costs.csv")
+
 
 if __name__== "__main__":
       main()

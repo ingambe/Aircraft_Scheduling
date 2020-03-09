@@ -15,13 +15,18 @@ def main(prg):
         nonlocal current_best_solution
         nonlocal all_time_best
         nonlocal timer
-        if m.cost[0] < current_best_solution:
-            current_best_solution = m.cost[0]
-        if m.cost[0] < all_time_best[1]:
-            all_time_best[1] = m.cost[0]
-            all_time_best[0] = m
-        if not timer.is_alive():
-            timer.start()
+        if len(m.cost) > 0:
+            if timer.is_alive():
+                timer.cancel()
+                timer.join()
+            timer = threading.Timer(60.0, prg.interrupt)
+            if m.cost[0] < current_best_solution:
+                current_best_solution = m.cost[0]
+            if m.cost[0] < all_time_best[1]:
+                all_time_best[1] = m.cost[0]
+                all_time_best[0] = m
+            if not timer.is_alive():
+                timer.start()
 
     i = 0
     ret = None
@@ -41,6 +46,10 @@ def main(prg):
         if timer.is_alive():
             timer.cancel()
             timer.join()
+    time.wait(1)
+    if timer.is_alive():
+        timer.cancel()
+        timer.join()
     print(all_time_best[0])
 #end.
 
