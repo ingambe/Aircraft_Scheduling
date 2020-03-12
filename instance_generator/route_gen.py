@@ -99,9 +99,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     AIRPORTS_MAINTENANCE = {}
     AIRPORTS_MAINTENANCE["seven_day"] = [0, 1, 2]
 
-    solution_tat_cost = 0
-
-
+    upper_bound_solution_cost = 0
 
     for aircraft in range(nb_aircraft):
         flights_per_aircraft[aircraft] = truncated_norm(
@@ -214,6 +212,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         current_second_last_maintenance["seven_day"] = 0
                         # we don't count the maintenance in the flights counter
                         i -= 1
+                        upper_bound_solution_cost += 1
 
                 else:
 
@@ -238,7 +237,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                             end_airport = nb_airport
                         minimal_legal_start = previous.end_date + previous.tat
                         start_date = minimal_legal_start - short_violation * 60
-                        solution_tat_cost += tat_cost
+                        upper_bound_solution_cost += tat_cost
                     elif short and long and aircraft == nb_aircraft - 1:
                         if start_airport == nb_airport + 2:
                             end_airport = nb_airport + 3
@@ -246,7 +245,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                             end_airport = nb_airport + 2
                         minimal_legal_start = previous.end_date + previous.tat
                         start_date = minimal_legal_start - short_violation * 60
-                        solution_tat_cost += tat_cost
+                        upper_bound_solution_cost += tat_cost
                     else:
                         end_airport = injective_airport(
                             start_airport,
@@ -284,15 +283,15 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     flights.append(flight_object)
                     flights_and_maintenances.append(flight_object)
 
-    solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft, tat_cost, sb_cost,
-                               solution_tat_cost, flights_created, second_initial_counter, limit_second_last_maintenance, LENGTH_SEC_MAINTENANCE, AIRPORTS_MAINTENANCE)
+    solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft, tat_cost, sb_cost
+                               , flights_created, second_initial_counter, limit_second_last_maintenance, LENGTH_SEC_MAINTENANCE, AIRPORTS_MAINTENANCE)
     if long:
         # we have added two airports for the two special long airport
         nb_airport += 2
     if short:
         # we have added two airports for the two special short tat airport
         nb_airport += 2
-    return solution
+    return solution, upper_bound_solution_cost
 
 
 def main():
@@ -398,7 +397,7 @@ def main():
 
     # if the user asked for default value
     if args.default:
-        solution = instance_generator(verbose=args.verbose)
+        solution, _ = instance_generator(verbose=args.verbose)
     else:
         # we ask when we don't have the value specified by the input
         if args.aircraft is not None:
@@ -484,7 +483,7 @@ def main():
             max_on_ground = int(
                 input(
                     "Max time on ground between two flights (in minutes) : "))
-        solution = instance_generator(
+        solution, _ = instance_generator(
             nb_aircraft, nb_airport, mean_length_flight, var_length_flight,
             min_length_flight, max_length_flight, mean_flight_per_aircraft,
             var_flight_per_aircraft, min_flight_per_aircraft,

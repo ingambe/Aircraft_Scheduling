@@ -33,7 +33,7 @@ def main(prg):
     ret = None
     best_solutions = []
     all_time_best = [None, float('inf')]
-    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable) and i < 1000:
+    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable):
         timer = threading.Timer(60.0, prg.interrupt)
         current_best_solution = float('inf')
         parts = []
