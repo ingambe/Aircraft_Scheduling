@@ -20,8 +20,8 @@ def test_flight_properties():
         assert flight.start_date < flight.end_date, "test failed, end is before start"
         assert flight.start_airport != flight.end_airport, "test failed, airport of start and end are the same"
         assert flight.start_date + flight.length_fly == flight.end_date, "test failed, problem when we have computed the lenght of the flight"
-        assert flight.length_fly <= default_max_length_flight * 60, "test failed, we exceed the maximum lenght of flight"
-        assert flight.length_fly >= default_min_length_flight * 60, "test failed, we are below the minimum lenght of flight"
+        assert flight.length_fly <= default_max_length_flight, "test failed, we exceed the maximum lenght of flight"
+        assert flight.length_fly >= default_min_length_flight, "test failed, we are below the minimum lenght of flight"
         assert flight.tat <= default_max_tat, "test failed, we exceed the maximum lenght of tat"
         assert flight.tat >= default_min_tat, "test failed, we are below the minimum lenght of tat"
 

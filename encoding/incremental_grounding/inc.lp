@@ -2,35 +2,40 @@
 
 import clingo
 import sys
+import threading
+import time
 
 def main(prg):
-    
-    # we stop if we have two time in a row the same cost
-    # for performance only, can be desactivated
-    def handle_stop(m):
-        #print("Solution cost is {}".format(m.cost[0]))
-        nonlocal solution_cost
-        nonlocal stop
-        # if it's the second time we have the solution cost
-        # or if we don't have cost for our problem
-        # then we stop
-        if m.cost[0] == solution_cost or len(m.cost) == 0:
-            #prg.interrupt()
-            stop = True
-        solution_cost = m.cost[0]
 
-    istop  = clingo.String("SAT")
+    # we stop if we have two time in a row the same cost
+    # for performance only, can be deactivated
+    def handle_stop(m):
+        """ This function keep track of the global best solution and the current iteration best solution
+        It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
+        nonlocal current_best_solution
+        nonlocal all_time_best
+        nonlocal timer
+        if len(m.cost) > 0:
+            if timer.is_alive():
+                timer.cancel()
+                #time.wait(1)
+                timer.join()
+            timer = threading.Timer(60.0, prg.interrupt)
+            if m.cost[0] < current_best_solution:
+                current_best_solution = m.cost[0]
+            if m.cost[0] < all_time_best[1]:
+                all_time_best[1] = m.cost[0]
+                all_time_best[0] = m
+            if not timer.is_alive():
+                timer.start()
 
     i = 0
     ret = None
-
-    solution_cost = -1
-    stop = False
-
-    while (not stop  or (
-              (istop.string == "SAT"     and not ret.satisfiable) or
-              (istop.string == "UNSAT"   and not ret.unsatisfiable) or 
-              (istop.string == "UNKNOWN" and not ret.unknown))):
+    best_solutions = []
+    all_time_best = [None, float('inf')]
+    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable):
+        timer = threading.Timer(60.0, prg.interrupt)
+        current_best_solution = float('inf')
         parts = []
         parts.append(("step", [i]))
         if i == 0:
@@ -38,7 +43,12 @@ def main(prg):
         prg.ground(parts)
         i += 1
         ret = prg.solve(on_model=handle_stop)
-        #ret = prg.solve()
+        best_solutions.append(current_best_solution)
+        if timer.is_alive():
+            timer.cancel()
+            timer.join()
+    time.wait(1)
+    print(all_time_best[0])
 #end.
 
 #program step(t).
