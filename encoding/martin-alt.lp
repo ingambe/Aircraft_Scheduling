@@ -76,8 +76,12 @@ start_next(T1,T2) :- start_aux(T1,T2), start_time(T2).
 
 :- first(F,P), start_time(A,T), #count{V : start(V,A,T), assign(V,P)} > 1.
 
-K {at(P,A,T)} :- end(V,A,T), first(V,P), keeping(K).
-K {at(P,A,T)} :- end(V,A,T), assign(V,P), keeping(K).
+taken(V,P,A,T) :- end(V,A,T), first(V,P).
+taken(V,P,A,T) :- end(V,A,T), assign(V,P).
+taken(P,A,T)   :- taken(V,P,A,T).
+taken(V,P)     :- taken(V,P,A,T).
+
+K {at(P,A,T)} :- taken(P,A,T), keeping(K).
 
 at(P,A,T2) :- at(P,A,T1), start_next(A,T1,T2), stay = 0,
               not assign(V,P) : start(V,A,T1).
@@ -105,16 +109,14 @@ scheme(A,T1,G,G+T4-T2-K) :- cutoff(A,T1,G,T2,K), K <= 0, check != 0,
 
 budget(V,A,T1,K) :- cutoff(V,A,T1,G), scheme(A,T1,G,K).
 
-remain(P,A,T1,K)       :- budget(V,A,T1,K), first(V,P), check = 0.
-remain(P,A,T1,K)       :- budget(V,A,T1,K), assign(V,P), check = 0.
+remain(P,A,T1,K)       :- budget(V,A,T1,K), taken(V,P), check = 0.
 remain(P,A,T2,K+T1-T2) :- remain(P,A,T1,K), start_next(A,T1,T2), 0 < K,
                           not assign(V,P) : start(V,A,T1).
 remain(P,A,T2,0)       :- remain(P,A,T1,0), start_next(A,T1,T2).
 
 :- remain(P,A,T,0), start(V,A,T), assign(V,P).
 
-remain(P,T1,K)       :- budget(V,A,T1,K), first(V,P), check != 0.
-remain(P,T1,K)       :- budget(V,A,T1,K), assign(V,P), check != 0.
+remain(P,T1,K)       :- budget(V,A,T1,K), taken(V,P), check != 0.
 remain(P,T2,K+T1-T2) :- remain(P,T1,K), start_next(T1,T2), 0 < K,
                         not assign(V,P) : start(V,T1).
 remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
@@ -123,13 +125,54 @@ remain(P,T2,0)       :- remain(P,T1,0), start_next(T1,T2).
 
 % Symmetry breaking to disambiguate flights
 
-budget(A,T1,K) :- budget(V,A,T1,K), 0 < K, symm = 0.
+break :- first(V,2), symm = 0.
 
-arrive(V,A,T2,#sup) :- end_tat(V,A,T1), end(V,A,T2), start_last(A,T), symm = 0,
+arrive(V,A,T2,K)    :- budget(V,A,T2,K), break, 0 < K.
+arrive(V,A,T2,#sup) :- end_tat(V,A,T1), end(V,A,T2), start_last(A,T), break,
                        T < T1+K : cutoff(K).
-arrive(A,T2,K)      :- arrive(V,A,T2,K).
-arrive(A,T2,K)      :- budget(A,T2,K).
 
+period(a,A,T1,K) :- arrive(V,A,T1,K).
+
+budget(A,T1,K)    :- period(a,A,T1,K), K != #sup.
+unroll(A,T1,T2,G) :- start_next(A,T1,T2), budget(A,T1,K), G = K+T1-T2, 0 < G.
+unroll(A,T1,T2,G) :- start_next(A,T1,T2), unroll(A,T,T1,K), G = K+T1-T2, 0 < G.
+
+expand(A,T1,T2) :- start_next(A,T1,T2), period(a,A,T1,#sup).
+expand(A,T1,T2) :- start_next(A,T1,T2), expand(A,T,T1).
+
+linked(A,T1,T2) :- unroll(A,T1,T2,G), keeping(0).
+linked(A,T1,T2) :- expand(A,T1,T2), keeping(0).
+
+period(g,A,T2,G)    :- unroll(A,T1,T2,G).
+period(g,A,T2,#sup) :- expand(A,T1,T2).
+
+period_sort(@insert((X,A,T),K)) :- period(X,A,T,K).
+
+period_index(X,A,T,K,I) :- period_sort((X,A,T)), (K,I) = @order((X,A,T)).
+
+access(A,T1,K) :- period_index(a,A,T1,K,1), period_index(g,A,T1,G,1), G < K.
+access(A,T1)   :- period_index(a,A,T1,K,2).
+access(A,T1)   :- access(A,T1,K).
+
+invert(A,T) :- access(A,T).
+invert(A,T) :- period_index(g,A,T,K,2).
+
+arrive_index(V,P,A,T1,I) :- arrive(V,A,T1,K), period_index(a,A,T1,K,I), 1 < I,
+                            first(F,P), F = V : not route(V).
+arrive_index(V,P,A,T1,1) :- arrive(V,A,T1,K), access(A,T1,K).
+
+longer(A,T1,P2,I-1) :- arrive(V,A,T1,K), taken(V,P2), 1 < P2,
+                       period_index(a,A,T1,K,I), 1 < I.
+longer(A,T1,P2,I-1) :- longer(A,T1,P2,I), 1 < I.
+
+invert(A,T1,P1,P2) :- arrive(V,A,T1,K), access(A,T1),
+                      taken(V,P1), first(F,P2), P1 < P2,
+                      period_index(a,A,T1,K,I), not longer(A,T1,P2,I).
+invert(A,T2,P1,P2) :- start_next(A,T1,T2), invert(A,T1,P1,P2),
+                      period_index(g,A,T2,K,2), not longer(A,T2,P2,1),
+                      not taken(V,P2) : arrive(V,A,T2,K), period_index(a,A,T2,K,1).
+
+%*
 arrive_sort(@insert((a,A,T2),K)) :- arrive(A,T2,K).
 
 arrive_index(A,T2,K,I) :- arrive_sort((a,A,T2)), (K,I) = @order((a,A,T2)).
@@ -155,6 +198,7 @@ gather(A,T1) :- access(A,T1).
 gather(A,T2) :- gather(A,T1,T2).
 
 gather(A,T1,T2) :- gather(A,T1), start_next(A,T1,T2), #count{G : unroll(A,T2,G)} > 1.
+*%
 
 %*
 depart_sort(@insert((d,A,T),V)) :- start(V,A,T), symm = 0.
@@ -213,8 +257,8 @@ longer(P1,P2,A,T2) :- longer(P1,P2,A,T1), start_next(A,T1,T2),
 
 % Output assignment of flights to aircrafts
 
-#show assign/2.
-#show assign(V,P) : flight(V), first(V,P).
+#show.
+#show assign(V,P) : taken(V,P).
 
 % Term sorting by means of script
 
