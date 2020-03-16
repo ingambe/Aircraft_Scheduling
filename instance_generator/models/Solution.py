@@ -1,16 +1,36 @@
 class Solution(object):
-    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft):
+    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost,
+                 unique_flights, start_counters, max_counters, length_maintenance, airport_maintenance):
         self.nb_aircraft = nb_aircraft
         self.nb_airport = nb_airport
         self.flights = fligths
         self.first_fligth_aircraft = first_fligth_aircraft
+        self.tat_cost = tat_cost
+        self.sb_cost = sb_cost
+        self.unique_flights = unique_flights
         # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
         self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
         for flight in self.flights:
-           self.flight_of_aircraft[flight.assigned_aircraft].append(flight)
+            self.flight_of_aircraft[flight.assigned_aircraft].append(flight)
+        self.start_counters = start_counters
+        self.max_counters = max_counters
+        self.length_maintenance = length_maintenance
+        self.airport_maintenance = airport_maintenance
 
     def __repr__(self):
         result = ""
+        for maintenance_type in self.start_counters:
+            result += "maintenance({}).\n".format(maintenance_type)
+            result += "length_maintenance({}, {}).\n".format(maintenance_type, self.length_maintenance[maintenance_type])
+            for airport in self.airport_maintenance[maintenance_type]:
+                result += "airport_maintenance({}, {}).\n".format(maintenance_type, airport + 1)
+            for aircraft in range(self.nb_aircraft):
+                result += "start_maintenance_counter({}, {}, {}).\n".format(maintenance_type, aircraft + 1,
+                                                                            self.start_counters[maintenance_type][aircraft])
+        for maintenance_type in self.max_counters:
+            result += "limit_counter({}, {}).\n".format(maintenance_type, self.max_counters[maintenance_type])
+        result += "cost(tat, {}).\n".format(self.tat_cost)
+        result += "cost(sb, {}).\n".format(self.sb_cost)
         result += "aircraft(1..{}).\n".format(self.nb_aircraft)
         result += "airport(1..{}).\n".format(self.nb_airport)
         result += "flight(1..{}).\n".format(len(self.flights))
@@ -22,11 +42,11 @@ class Solution(object):
         result += "\n"
         # we add the airport of departure
         for flight in self.flights:
-            result += "airport_start({}, {}). ".format(flight.id, flight.start_airport)
+            result += "airport_start({}, {}). ".format(flight.id, flight.start_airport + 1)
         result += "\n"
         # we add the airport of destination
         for flight in self.flights:
-            result += "airport_end({}, {}). ".format(flight.id, flight.end_airport)
+            result += "airport_end({}, {}). ".format(flight.id, flight.end_airport + 1)
         result += "\n"
         # we add the start date of the flight
         for flight in self.flights:
