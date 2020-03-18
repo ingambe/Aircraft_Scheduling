@@ -14,28 +14,24 @@ def main(prg):
         """ This function keep track of the global best solution and the current iteration best solution
         It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
         nonlocal current_best_solution
-        nonlocal all_time_best
         nonlocal timer
         if len(m.cost) > 0:
             if timer.is_alive():
                 timer.cancel()
-                #time.wait(1)
                 timer.join()
             timer = threading.Timer(60.0, prg.interrupt)
             if m.cost[0] < current_best_solution:
                 current_best_solution = m.cost[0]
-            if m.cost[0] < all_time_best[1]:
-                all_time_best[1] = m.cost[0]
-                all_time_best[0] = m
             if not timer.is_alive():
                 timer.start()
-Hello
+
     i = 0
     ret = None
     best_solutions = []
     all_time_best = [None, float('inf')]
     while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable):
         timer = threading.Timer(60.0, prg.interrupt)
+        timer.start()
         current_best_solution = float('inf')
         parts = []
         parts.append(("step", [i]))
@@ -48,7 +44,6 @@ Hello
         if timer.is_alive():
             timer.cancel()
             timer.join()
-    #print(all_time_best[0])
 #end.
 
 #program step(t).

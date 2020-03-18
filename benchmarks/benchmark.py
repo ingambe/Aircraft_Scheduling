@@ -63,11 +63,25 @@ def main():
             duration = end - start
             #print("out: {}".format(stdoutdata))
             #print("error: {}".format(stderrdata))
+            #print(stdoutdata)
             json_answers = json.loads(stdoutdata)
+
+            #call = json_answers["Call"][-1]
+            #answer = call["Witnesses"][-1]
+            #cost = answer["Costs"][0]
+
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
+            cost = float('inf')
             call = json_answers["Call"][-1]
             answer = call["Witnesses"][-1]
-            cost = answer["Costs"][0]
+            # we need to check all solution and get the best one
+            for call_current in json_answers["Call"]:
+                if "Witnesses" in call_current:
+                    answer_current = call_current["Witnesses"][-1]
+                    current_cost = answer_current["Costs"][0]
+                    if current_cost < cost:
+                        answer = answer_current
+                        cost = current_cost
             # if it's not an intermediate call (needed for incremental grouding)
             if not args.no_check:
                 # we append "" just to get the last . when we join latter
