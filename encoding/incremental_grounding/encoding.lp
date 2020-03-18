@@ -12,7 +12,7 @@ covered(F2, M) :- assign(F2, A), assign(F1, A), end(F1, T1), end(F2, T2), T1 < T
 
 :- flight(F), maintenance(M), not covered(F, M).
 
-:~ maintenance_after_flight(F, _). [F]
+:~ maintenance_after_flight(F, _). [101, F]
 
 % we retrive the initial allocation
 % assign(V, A) :- first(V, A).

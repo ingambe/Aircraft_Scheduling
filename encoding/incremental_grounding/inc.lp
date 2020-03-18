@@ -4,6 +4,7 @@ import clingo
 import sys
 import threading
 import time
+import copy
 
 def main(prg):
 
@@ -28,7 +29,7 @@ def main(prg):
                 all_time_best[0] = m
             if not timer.is_alive():
                 timer.start()
-
+Hello
     i = 0
     ret = None
     best_solutions = []
@@ -47,8 +48,7 @@ def main(prg):
         if timer.is_alive():
             timer.cancel()
             timer.join()
-    time.wait(1)
-    print(all_time_best[0])
+    #print(all_time_best[0])
 #end.
 
 #program step(t).

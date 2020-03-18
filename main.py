@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import clyngor
 import re
 import sys
 
@@ -14,6 +13,7 @@ from Solution import *
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance_generator')))
 import route_gen
+
 
 def gantt_solution(instance, solution):
     '''
