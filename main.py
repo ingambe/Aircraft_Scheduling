@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-
+import json
 import os
 import argparse
 import re
 import sys
+import tempfile
+import time
+from os.path import basename
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance_generator/models')))
@@ -13,6 +16,7 @@ from Solution import *
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance_generator')))
 import route_gen
+import subprocess
 
 
 def gantt_solution(instance, solution):
@@ -110,41 +114,69 @@ def gantt_solution(instance, solution):
 def main():
     parser = argparse.ArgumentParser(description='Generate the solution and test it to ensure it is correct')
     parser.add_argument('--instance', type=str, help="the path to the instance")
-    parser.add_argument('--encoding', type=str, help="the path to the encoding")    
     parser.add_argument('--output_file', type=str, help="the path to the ouput file")
     parser.add_argument('--gantt', action='store_true', help="output the gannt of the solution")
-    parser.add_argument('--all', action='store_true', help="output all the solution")
     args = parser.parse_args()
     instance = args.instance
-    encoding = args.encoding
     output_file = "solution_" + instance.split("/")[-1]
-    if args.output_file != None:
+    if args.output_file is not None:
         output_file =  args.output_file
-    if args.all != None:
-        answers = clyngor.solve(files=[instance, encoding], wait=True)
+    start = time.time()
+    clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdoutdata, stderrdata) = clingo.communicate()
+    clingo.wait()
+    end = time.time()
+    duration = end - start
+    # print("out: {}".format(stdoutdata))
+    # print("error: {}".format(stderrdata))
+    # print(stdoutdata)
+    json_answers = json.loads(stdoutdata)
+
+    correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
+    if correct_solution:
+        print("There is a solution, but is it a correct one ? Let's find out !")
     else:
-        answers = clyngor.solve(files=[instance, encoding], wait=True, nb_model=1)    
-    answers = clyngor.solve(files=[instance, encoding], wait=True)
-    solutions = [answer for answer in answers]
-    if len(solutions) == 0:
         print("There is no solution")
-    print("There is a solution, but is it a correct one ? Let's find out !")
-    for answer in solutions:
-        asp_str = ' '.join(clyngor.utils.generate_answer_set_as_str(answer, atom_end='.'))
-        test_correctness = clyngor.solve(inline = asp_str, files=[os.path.dirname(os.path.realpath(__file__)) +"/test_solution/test_solution.lp", instance])
-        corrects = [correct for correct in test_correctness]
-        if len(corrects) == 0 : 
-            print("the solution is incorrect !")
-        else:
-            print("The solution generated is correct ! :O")
-        file = open("solutions/" + output_file, "w+")
-        file.write(asp_str)
-        file.close()
-        if args.gantt:
-            instances_sol = clyngor.solve(files=[instance], wait=True)
-            for instance_sol in instances_sol:
-                instance_str = ''.join(clyngor.utils.generate_answer_set_as_str(instance_sol, atom_end='.'))
-                gantt_solution(instance_str, asp_str)
+    cost = float('inf')
+    call = json_answers["Call"][-1]
+    answer = call["Witnesses"][-1]
+    # we need to check all solution and get the best one
+    for call_current in json_answers["Call"]:
+        if "Witnesses" in call_current:
+            answer_current = call_current["Witnesses"][-1]
+            current_cost = answer_current["Costs"][0]
+            if current_cost < cost:
+                answer = answer_current
+                cost = current_cost
+    # we append "" just to get the last . when we join latter
+    answer = answer["Value"] + [""]
+    answer_str = ".".join(answer)
+    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+    answer_temp.write(answer_str)
+    clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [
+                instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+    # print("stdoudata check : {}".format(stdoutdata_check))
+    json_check = json.loads(stdoutdata_check)
+    answer_temp.close()
+    os.remove(answer_temp.name)
+    if not json_check["Result"] == "SATISFIABLE":
+        correct_solution = False
+    if correct_solution:
+        print("The solution is correct")
+    if args.gantt:
+        clingo_facts_grounded = subprocess.Popen(
+            ["clingo"] + [instance] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdoutdata_instance, stderrdata_instance) = clingo_facts_grounded.communicate()
+        clingo.wait()
+        json_answers = json.loads(stdoutdata_instance)
+        call = json_answers["Call"][-1]
+        answer = " ".join(call["Witnesses"][-1]["Value"])
+        gantt_solution(answer, answer_str)
+
+
+
 
 if __name__== "__main__":
       main()

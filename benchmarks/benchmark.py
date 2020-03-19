@@ -106,6 +106,7 @@ def main():
             print("\tSatisfiable {}".format(correct_solution))
             print("\tDuration {} seconds".format(result_iteration[encoding]))
             print("\tBest solution {}".format(cost))
+            print("\tUpper bound {}".format(minimal_cost))
         results.append(result_iteration)
         costs_run.append(cost_iteration)
         instance_temp.close()

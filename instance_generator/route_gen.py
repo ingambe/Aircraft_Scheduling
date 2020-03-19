@@ -190,10 +190,10 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 # first we add maintenance if needed
                 usage_aircraft = current_second_last_maintenance["seven_day"] / limit_second_last_maintenance['seven_day']
                 #print("usage aircraft {}".format(usage_aircraft))
-                # we start putting maintenance after 50% usage
+                # we start putting maintenance after 70% usage
                 # but anyway if usage reach 90%, we put it
                 if usage_aircraft > 0.5:
-                    probability_add_maintenance = usage_aircraft + random.random()
+                    probability_add_maintenance = usage_aircraft + (random.random() * 0.5)
                     if probability_add_maintenance >= 1.0 or usage_aircraft > 0.9:
                         # we get an airport to perform the maintenance and we modify the end airport of the previous
                         # flight we need to ensure that the start and end airport of the previous start doesn't end
@@ -212,7 +212,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         current_second_last_maintenance["seven_day"] = 0
                         # we don't count the maintenance in the flights counter
                         i -= 1
-                        upper_bound_solution_cost += 1
+                        upper_bound_solution_cost += 101
 
                 else:
 
