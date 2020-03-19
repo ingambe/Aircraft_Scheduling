@@ -27,6 +27,10 @@ def gantt_solution(instance, solution):
     # first remove annoying whitespace
     instance = instance.replace(" ", "")
     solution = solution.replace(" ", "")
+
+
+    # utility for the parsing of inside each rule
+    number_regex = re.compile(r'[0-9]+')
     # some regex to parse the data
     aircraft_regex = re.compile(r'aircraft\([0-9]+\)')
     airport_regex = re.compile(r'airport\([0-9]+\)')
@@ -38,11 +42,37 @@ def gantt_solution(instance, solution):
     end_regex = re.compile(r'[^_]end\([0-9]+,[0-9]+\)')
     tat_regex = re.compile(r'tat\([0-9]+,[0-9]+\)')
     assign_regex = re.compile(r'assign\([0-9]+,[0-9]+\)')
-    # utility for the parsing of inside each rule
-    number_regex = re.compile(r'[0-9]+')
+    maintenance_regex = re.compile(r'maintenance_after_flight\([0-9]+,[0-9]+\)')
+    length_maintenance_regex = re.compile(r'length_maintenance\(seven_day,[0-9]+\)')
+    maintenance_length = dict()
+    maintenance_length["seven_day"] = int(length_maintenance_regex.findall(instance)[0])
+
+    airport_maintenance_regex = re.compile(r'airport_maintenance\(seven_day,[0-9]+\)')
+    airport_maintenance = airport_maintenance_regex.findall(instance)
+    airport_maintenance_int = [int(number_regex.findall(x)[0]) for x in airport_maintenance]
+
+
+    limit_counter_regex = re.compile(r'limit_counter\(seven_day,[0-9]+\)')
+    limit_counter = limit_counter_regex.findall(instance)
+    limit_counter_dict = dict()
+    limit_counter_dict["seven_day"] = int(number_regex.findall(limit_counter[0])[0])
+
     # we start with the flights
     flights_string = flight_regex.findall(instance)
     number_flights = len(flights_string)
+
+    start_maint_count = dict()
+
+    airport_maintenance_regex = re.compile(r'start_maintenance_counter\(seven_day,[0-9]+,[0-9]+\)')
+    parsed = airport_maintenance_regex.findall(instance)
+    start_maint_count["seven_day"] = [0 for i in range(number_flights)]
+    for parse in parsed:
+        numbers = number_regex.findall(parse)
+        numbers = [int(x) for x in numbers]
+        start_maint_count["seven_day"][numbers[0] - 1] = numbers[1]
+
+
+
     # we get the airport start
     airports_start = [-1 for i in range(number_flights)]
     parsed = airport_start_regex.findall(instance)
@@ -61,7 +91,6 @@ def gantt_solution(instance, solution):
     start = [-1 for i in range(number_flights)]
     parsed = start_regex.findall(instance)
     for parse in parsed:
-        #print("start {}".format(parse))
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         start[numbers[0] - 1] = numbers[1]
@@ -86,14 +115,27 @@ def gantt_solution(instance, solution):
     for parse in parsed:
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
-        fligth_aircraft_assigned[numbers[0] - 1] = numbers[1] - 1
+        fligth_aircraft_assigned[numbers[0] - 1] = numbers[1]
+    maintenance_after_flight_assigned = [False for i in range(number_flights)]
+    parsed = maintenance_regex.findall(solution)
+    for parse in parsed:
+        numbers = number_regex.findall(parse)
+        numbers = [int(x) for x in numbers]
+        maintenance_after_flight_assigned[numbers[0] - 1] = numbers[1]
     # we have now enought information to build the fligths objects
     flights = [None for x in range(number_flights)]
     for i in range(number_flights):
         length_flight = end[i] - start[i]
         flight = Flight(i + 1, start[i], length_flight, airports_start[i], airports_end[i], fligth_aircraft_assigned[i], tat[i])
         flights[i] = flight
-    
+
+    flights_created = dict()
+    for i in range(number_flights):
+        start_airport = airports_start[i]
+        end_airport = airports_end[i]
+        if not (start_airport, end_airport) in flights_created:
+            flights_created[(start_airport, end_airport)] = flights[i]
+
     #print("flights {}".format(flights))    
     # now the solution model
     parsed = aircraft_regex.findall(instance)
@@ -107,7 +149,7 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         first_flight_assigned[numbers[1] - 1] = flights[numbers[0] - 1]
-    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned)
+    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, 500, 5000, flights_created, start_maint_count, limit_counter_dict, maintenance_length, airport_maintenance_int)
     route_gen.gannt(solution)
 
 
