@@ -38,14 +38,14 @@ def gantt_solution(instance, solution):
     first_regex = re.compile(r'first\([0-9]+,[0-9]+\)')
     airport_start_regex = re.compile(r'airport_start\([0-9]+,[0-9]+\)')
     airport_end_regex = re.compile(r'airport_end\([0-9]+,[0-9]+\)')
-    start_regex = re.compile(r'[^_]start\([0-9]+,[0-9]+\)')
-    end_regex = re.compile(r'[^_]end\([0-9]+,[0-9]+\)')
+    start_regex = re.compile(r'start\([0-9]+,[0-9]+\)')
+    end_regex = re.compile(r'end\([0-9]+,[0-9]+\)')
     tat_regex = re.compile(r'tat\([0-9]+,[0-9]+\)')
     assign_regex = re.compile(r'assign\([0-9]+,[0-9]+\)')
     maintenance_regex = re.compile(r'maintenance_after_flight\([0-9]+,[0-9]+\)')
     length_maintenance_regex = re.compile(r'length_maintenance\(seven_day,[0-9]+\)')
     maintenance_length = dict()
-    maintenance_length["seven_day"] = int(length_maintenance_regex.findall(instance)[0])
+    maintenance_length["seven_day"] = int(number_regex.findall(length_maintenance_regex.findall(instance)[0])[0])
 
     airport_maintenance_regex = re.compile(r'airport_maintenance\(seven_day,[0-9]+\)')
     airport_maintenance = airport_maintenance_regex.findall(instance)
@@ -94,11 +94,11 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         start[numbers[0] - 1] = numbers[1]
+        print(numbers[0] - 1)
     # then we get the end
     end = [-1 for i in range(number_flights)]
     parsed = end_regex.findall(instance)
     for parse in parsed:
-        #print("end {}".format(parse))
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         end[numbers[0] - 1] = numbers[1]
@@ -115,7 +115,7 @@ def gantt_solution(instance, solution):
     for parse in parsed:
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
-        fligth_aircraft_assigned[numbers[0] - 1] = numbers[1]
+        fligth_aircraft_assigned[numbers[0] - 1] = numbers[1] - 1
     maintenance_after_flight_assigned = [False for i in range(number_flights)]
     parsed = maintenance_regex.findall(solution)
     for parse in parsed:
