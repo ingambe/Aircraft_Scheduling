@@ -89,6 +89,8 @@ def main():
                 answer_str = ".".join(answer)
                 answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
                 answer_temp.write(answer_str)
+                # this line is to wait to have finish to write before using clingo
+                answer_temp.flush()
                 clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
                 clingo_check.wait()

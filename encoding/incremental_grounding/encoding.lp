@@ -16,7 +16,7 @@ covered(F2, M) :- assign(F2, A), assign(F1, A), end(F1, T1), end(F2, T2), T1 < T
 
 #show maintenance_after_flight/2.
 
-compatible2(V1, V2, T2 - T1) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), T1 <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 != V2.
+compatible2(V1, V2, T2 - T1) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2),  tat(V1, MIN), T1 + MIN <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 != V2.
 
 :- flight(V), not routed(V, 1).
 
@@ -32,7 +32,7 @@ assign(V, A) :- assigned(V, A, 1).
 #external routed(V, t+1) : flight(V).
 #external assigned(V, A, t+1) : flight(V), aircraft(A), not first(V, _).
 
-% compatible(V1, V2) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), tat(V1, MIN), T1 + (MIN * 30) <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 != V2, T2 - (T1 + (MIN * 30)) < t.
+% compatible(V1, V2) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), tat(V1, MIN), T1 + (MIN * 60) <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 != V2, T2 - (T1 + (MIN * 60)) < t.
 compatible(V1, V2, t) :- compatible2(V1, V2, T), (t-1) * 3600 <= T, T < t * 3600.
 
 % #program check(t).
@@ -62,6 +62,8 @@ routed(V, t) :- routed(V, t+1).
 
 % detect each violation
 violation_tat(V1, V2, T, t) :- V1 < V2, route(V1, V2, t), end(V1, T1), start(V2, T2), tat(V1, MIN), T = T1 + MIN - T2, T > 0.
+%violation_tat(V1, V2, 0, t) :- V1 < V2, route(V1, V2, t), end(V1, T1), start(V2, T2), start(V1, T3), T2 > T3, T2 < T1.
+%violation_tat(V1, V2, 0, t) :- V1 < V2, route(V1, V2, t), end(V1, T1), end(V2, T2), start(V1, T3), T2 > T3, T2 < T1.
 
 :~ violation_tat(V1, V2, T, t), cost(tat, C). [C, V1, t]
 

@@ -50,7 +50,8 @@ def gantt_solution(instance, solution):
 
     airport_maintenance_regex = re.compile(r'airport_maintenance\(seven_day,[0-9]+\)')
     airport_maintenance = airport_maintenance_regex.findall(instance)
-    airport_maintenance_int = [int(number_regex.findall(x)[0]) for x in airport_maintenance]
+    airport_maintenance_int = dict()
+    airport_maintenance_int["seven_day"] = [int(number_regex.findall(x)[0]) for x in airport_maintenance]
 
 
     limit_counter_regex = re.compile(r'limit_counter\(seven_day,[0-9]+\)')
@@ -151,6 +152,8 @@ def gantt_solution(instance, solution):
         numbers = [int(x) for x in numbers]
         first_flight_assigned[numbers[1] - 1] = flights[numbers[0] - 1]
     solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, 500, 5000, flights_created, start_maint_count, limit_counter_dict, maintenance_length, airport_maintenance_int)
+    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+    answer_temp.write(repr(solution))
     route_gen.gannt(solution)
 
 
@@ -199,7 +202,6 @@ def main():
     answer_temp.write(answer_str)
     # this line is to wait to have finish to write
     answer_temp.flush()
-    print(answer_temp.name)
     clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [answer_temp.name] + [
                 instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutdata_check, stderrdata_check) = clingo_check.communicate()

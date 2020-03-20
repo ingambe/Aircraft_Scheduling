@@ -1,9 +1,9 @@
 default_nb_aircraft = 10
 default_nb_airport = 20
-default_mean_length_flight = 70
-default_var_length_flight = 60
-default_min_length_flight = 40
-default_max_length_flight = 300
+default_mean_length_flight = 140
+default_var_length_flight = 120
+default_min_length_flight = 80
+default_max_length_flight = 600
 default_mean_flight_per_aicraft = 40
 default_var_flight_per_aicraft = 10
 default_min_flight_per_aicraft = 25
