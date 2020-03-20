@@ -91,6 +91,7 @@ def main():
                 answer_temp.write(answer_str)
                 clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+                clingo_check.wait()
                 #print("stdoudata check : {}".format(stdoutdata_check))
                 json_check = json.loads(stdoutdata_check)
                 answer_temp.close()

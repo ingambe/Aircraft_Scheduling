@@ -195,17 +195,16 @@ def main():
     # we append "" just to get the last . when we join latter
     answer = answer["Value"] + [""]
     answer_str = ".".join(answer)
-    #print(answer_str)
     answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
     answer_temp.write(answer_str)
+    # this line is to wait to have finish to write
+    answer_temp.flush()
     print(answer_temp.name)
     clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [answer_temp.name] + [
                 instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
-    # print("stdoudata check : {}".format(stdoutdata_check))
+    clingo_check.wait()
     json_check = json.loads(stdoutdata_check)
-    #answer_temp.close()
-    #os.remove(answer_temp.name)
     print("Best solution cost {}".format(cost))
     print(json_check)
     if not json_check["Result"] == "SATISFIABLE":
