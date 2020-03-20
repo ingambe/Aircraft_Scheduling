@@ -45,7 +45,8 @@ def gantt_solution(instance, solution):
     maintenance_regex = re.compile(r'maintenance_after_flight\([0-9]+,[0-9]+\)')
     length_maintenance_regex = re.compile(r'length_maintenance\(seven_day,[0-9]+\)')
     maintenance_length = dict()
-    maintenance_length["seven_day"] = int(number_regex.findall(length_maintenance_regex.findall(instance)[0])[0])
+    if len(length_maintenance_regex.findall(instance)) > 0:
+        maintenance_length["seven_day"] = int(number_regex.findall(length_maintenance_regex.findall(instance)[0])[0])
 
     airport_maintenance_regex = re.compile(r'airport_maintenance\(seven_day,[0-9]+\)')
     airport_maintenance = airport_maintenance_regex.findall(instance)
@@ -55,7 +56,8 @@ def gantt_solution(instance, solution):
     limit_counter_regex = re.compile(r'limit_counter\(seven_day,[0-9]+\)')
     limit_counter = limit_counter_regex.findall(instance)
     limit_counter_dict = dict()
-    limit_counter_dict["seven_day"] = int(number_regex.findall(limit_counter[0])[0])
+    if len(limit_counter) > 0:
+        limit_counter_dict["seven_day"] = int(number_regex.findall(limit_counter[0])[0])
 
     # we start with the flights
     flights_string = flight_regex.findall(instance)
@@ -94,7 +96,6 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         start[numbers[0] - 1] = numbers[1]
-        print(numbers[0] - 1)
     # then we get the end
     end = [-1 for i in range(number_flights)]
     parsed = end_regex.findall(instance)
@@ -194,15 +195,19 @@ def main():
     # we append "" just to get the last . when we join latter
     answer = answer["Value"] + [""]
     answer_str = ".".join(answer)
+    #print(answer_str)
     answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
     answer_temp.write(answer_str)
-    clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [
+    print(answer_temp.name)
+    clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [answer_temp.name] + [
                 instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
     # print("stdoudata check : {}".format(stdoutdata_check))
     json_check = json.loads(stdoutdata_check)
-    answer_temp.close()
-    os.remove(answer_temp.name)
+    #answer_temp.close()
+    #os.remove(answer_temp.name)
+    print("Best solution cost {}".format(cost))
+    print(json_check)
     if not json_check["Result"] == "SATISFIABLE":
         correct_solution = False
     if correct_solution:
