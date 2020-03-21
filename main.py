@@ -208,7 +208,6 @@ def main():
     clingo_check.wait()
     json_check = json.loads(stdoutdata_check)
     print("Best solution cost {}".format(cost))
-    print(json_check)
     if not json_check["Result"] == "SATISFIABLE":
         correct_solution = False
     if correct_solution:

@@ -16,7 +16,7 @@ covered(F2, M) :- assign(F2, A), assign(F1, A), end(F1, T1), end(F2, T2), T1 < T
 
 #show maintenance_after_flight/2.
 
-compatible2(V1, V2, T2 - T1) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2),  tat(V1, MIN), T1 + MIN <= T2, airport_end(V1, A1), airport_start(V2, A1), V1 != V2.
+compatible2(V1, V2, T2 - T1) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2),  tat(V1, MIN), airport_end(V1, A1), airport_start(V2, A1), T1 + MIN <= T2.
 
 :- flight(V), not routed(V, 1).
 
@@ -61,9 +61,9 @@ routed(V, t) :- routed(V, t+1).
 :- routed_now(V, t-1), routed(V, t).
 
 % detect each violation
-violation_tat(V1, V2, T, t) :- V1 < V2, route(V1, V2, t), end(V1, T1), start(V2, T2), tat(V1, MIN), T = T1 + MIN - T2, T > 0.
-%violation_tat(V1, V2, 0, t) :- V1 < V2, route(V1, V2, t), end(V1, T1), start(V2, T2), start(V1, T3), T2 > T3, T2 < T1.
-%violation_tat(V1, V2, 0, t) :- V1 < V2, route(V1, V2, t), end(V1, T1), end(V2, T2), start(V1, T3), T2 > T3, T2 < T1.
+violation_tat(V1, V2, T, t) :- V1 < V2, assigned(V1, A, K1), assigned(V2, A, t), end(V1, T1), start(V2, T2), tat(V1, MIN), T = T1 + MIN - T2, T > 0, K1 <= t, end(V2, T3), T3 > T1.
+%violation_tat(V1, V2, 0, t) :- V1 < V2, assigned(V1, A, K1), assigned(V2, A, t), end(V1, T1), start(V2, T2), start(V1, T3), T2 > T3, T2 < T1, K1 <= t.
+%violation_tat(V1, V2, 0, t) :- V1 < V2, assigned(V1, A, K1), assigned(V2, A, t), end(V1, T1), end(V2, T2), start(V1, T3), T2 > T3, T2 < T1, K1 <= t.
 
 :~ violation_tat(V1, V2, T, t), cost(tat, C). [C, V1, t]
 
