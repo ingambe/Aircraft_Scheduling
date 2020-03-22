@@ -14,24 +14,24 @@ def main(prg):
         """ This function keep track of the global best solution and the current iteration best solution
         It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
         nonlocal current_best_solution
-        nonlocal timer
+        #nonlocal timer
         if len(m.cost) > 0:
-            if timer.is_alive():
-                timer.cancel()
-                timer.join()
-            timer = threading.Timer(60.0, prg.interrupt)
+            #if timer.is_alive():
+             #   timer.cancel()
+              #  timer.join()
+            #timer = threading.Timer(60.0, prg.interrupt)
             if m.cost[0] < current_best_solution:
                 current_best_solution = m.cost[0]
-            if not timer.is_alive():
-                timer.start()
+            #if not timer.is_alive():
+             #   timer.start()
 
     i = 0
     ret = None
     best_solutions = []
-    all_time_best = [None, float('inf')]
-    while ((len(best_solutions) < 3 or best_solutions[-3] >= best_solutions[-1]) and (ret is None or not ret.satisfiable)) or i < 20:
-        timer = threading.Timer(60.0, prg.interrupt)
-        timer.start()
+    all_time_best = float('inf')
+    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]):
+        #timer = threading.Timer(60.0, prg.interrupt)
+        #timer.start()
         current_best_solution = float('inf')
         parts = []
         parts.append(("step", [i]))
@@ -40,10 +40,14 @@ def main(prg):
         prg.ground(parts)
         i += 1
         ret = prg.solve(on_model=handle_stop)
-        best_solutions.append(current_best_solution)
-        if timer.is_alive():
-            timer.cancel()
-            timer.join()
+        print("Current best {}".format(current_best_solution))
+        #if current_best_solution < float('inf'):
+         #   best_solutions.append(current_best_solution)
+          #  prg.add("step", [], "best({}).".format(current_best_solution))
+           # prg.ground([("step", [])])
+        #if timer.is_alive():
+         #   timer.cancel()
+          #  timer.join()
 #end.
 
 #program step(t).
