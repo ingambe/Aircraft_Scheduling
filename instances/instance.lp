@@ -1,5 +1,5 @@
 maintenance(seven_day).
-length_maintenance(seven_day, 14400).
+length_maintenance(seven_day, 1).
 airport_maintenance(seven_day, 1).
 airport_maintenance(seven_day, 2).
 airport_maintenance(seven_day, 3).
