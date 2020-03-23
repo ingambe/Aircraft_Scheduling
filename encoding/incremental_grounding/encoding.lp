@@ -41,8 +41,6 @@ routed(V, t) :- routed(V, t+1).
 
 % detect each violation
 violation_tat(V1, V2, T, t) :- assign(V1, A), assign(V2, A), end(V1, T1), start(V2, T2), start(V1, T3), tat(V1, MIN), T = T1 + MIN - T2, T > 0, T2 > T3.
-%violation_tat(V1, V2, 0, t) :- assigned(V1, A, _), assigned(V2, A, t), end(V1, T1), start(V2, T2), start(V1, T3), T2 > T3, T2 < T1.
-%violation_tat(V1, V2, 0, t) :- assigned(V1, A, _), assigned(V2, A, t), end(V1, T1), end(V2, T2), start(V1, T3), T2 > T3, T2 < T1.
 
 :~ violation_tat(V1, V2, T, t), cost(tat, C). [C, V1, t]
 
