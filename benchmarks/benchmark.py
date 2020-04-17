@@ -63,11 +63,25 @@ def main():
             duration = end - start
             #print("out: {}".format(stdoutdata))
             #print("error: {}".format(stderrdata))
+            #print(stdoutdata)
             json_answers = json.loads(stdoutdata)
+
+            #call = json_answers["Call"][-1]
+            #answer = call["Witnesses"][-1]
+            #cost = answer["Costs"][0]
+
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
+            cost = float('inf')
             call = json_answers["Call"][-1]
             answer = call["Witnesses"][-1]
-            cost = answer["Costs"][0]
+            # we need to check all solution and get the best one
+            for call_current in json_answers["Call"]:
+                if "Witnesses" in call_current:
+                    answer_current = call_current["Witnesses"][-1]
+                    current_cost = answer_current["Costs"][0]
+                    if current_cost < cost:
+                        answer = answer_current
+                        cost = current_cost
             # if it's not an intermediate call (needed for incremental grouding)
             if not args.no_check:
                 # we append "" just to get the last . when we join latter
@@ -75,8 +89,11 @@ def main():
                 answer_str = ".".join(answer)
                 answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
                 answer_temp.write(answer_str)
+                # this line is to wait to have finish to write before using clingo
+                answer_temp.flush()
                 clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+                clingo_check.wait()
                 #print("stdoudata check : {}".format(stdoutdata_check))
                 json_check = json.loads(stdoutdata_check)
                 answer_temp.close()
@@ -92,6 +109,7 @@ def main():
             print("\tSatisfiable {}".format(correct_solution))
             print("\tDuration {} seconds".format(result_iteration[encoding]))
             print("\tBest solution {}".format(cost))
+            print("\tUpper bound {}".format(minimal_cost))
         results.append(result_iteration)
         costs_run.append(cost_iteration)
         instance_temp.close()
