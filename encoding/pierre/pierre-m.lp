@@ -15,7 +15,7 @@ compatible(F1, B, T1, F2, S2, T2) :- flight(F1, A, S1, B, T1),
                                      not first(F2).
 compatible(B, T1, F2, S2, T2)     :- compatible(F1, B, T1, F2, S2, T2).
 
-% initially covered intervals for maintenances per plain
+% initially covered intervals for maintenances per plane
 
 includable(F, P, T, T1, M) :- flight(F, A, S, B, T), first(F, P),
                               start_maintenance_counter(M, P, Q),
@@ -37,7 +37,7 @@ time_range(S, T, F) :- time_range(S, T),
                        flight(F, B, S2, C, T2), S <= S2, T2 <= T,
                        not first(F).
 
-% successor flights (additionally) covered when maintaining a plain at some time
+% successor flights (additionally) covered when maintaining a plane at some time
 
 maintainable(P, T2, F2, M) :- includable(F1, P, S1, T1, M),
                               extensible(T2, S, T, M), S1 <= T2,
@@ -46,7 +46,7 @@ maintainable(P, T2, F2, M) :- includable(F1, P, S1, T1, M),
 maintainable(P, T2, M)     :- maintainable(P, T2, F2, M).
 maintainable(P, T2)        :- maintainable(P, T2, M).
 
-% sum the lengths of maintenances that can be performed for a plain at some time
+% sum the lengths of maintenances that can be performed for a plane at some time
 
 maintenances(P, T2, O) :- maintainable(P, T2),
                           O = #sum+{N, M : maintainable(P, T2, M),
@@ -63,12 +63,12 @@ maintenances(P, T2, O) :- maintainable(P, T2),
 
 :- flight(F1, A, S1, B, T1), #count{F2 : route(F1, F2)} > 1.
 
-% propagate assigned plains from first flights over successors
+% propagate assigned planes from first flights over successors
 
 assign(F1, P) :- flight(F1, A, S1, B, T1), first(F1, P).
 assign(F2, P) :- assign(F1, P), route(F1, F2).
 
-% each flight must be assigned to exactly one plain (redundant constraint)
+% each flight must be assigned to exactly one plane (redundant constraint)
 
 :- flight(F, A, S, B, T), #count{P : assign(F, P)} != 1.
 
@@ -77,26 +77,26 @@ assign(F2, P) :- assign(F1, P), route(F1, F2).
 {maintain(P, T1, M)} :- flight(F1, A, S1, B, T1), extensible(B, T1, S, T, M),
                         maintainable(P, T1, M), assign(F1, P).
 
-% maintenances for a plain must be finished before successor flight's start time
+% maintenances for a plane must be finished before successor flight's start time
 
 :- maintenances(P, T1, O), compatible(B, T1, F2, S2, T2), D = S2 - T1, D < O,
    assign(F2, P), D < #sum+{N, M : maintain(P, T1, M),
                                    airport_maintenance(M, B),
                                    length_maintenance(M, N)}.
 
-% flights covered by maintenances for a plain
+% flights covered by maintenances for a plane
 
 covered(F1, P, M) :- includable(F1, P, S, T, M), S <= T.
 covered(F2, P, M) :- includable(F1, P, S, T, M), time_range(S, T, F2).
 covered(F2, P, M) :- maintainable(P, T1, F2, M), maintain(P, T1, M).
 
-% flights assigned to a plain must be covered for each maintenance kind
+% flights assigned to a plane must be covered for each maintenance kind
 
 :- flight(F, A, S, B, T), maintenance(M), assign(F, P), not covered(F, P, M).
 
 % OPTIMIZE
 
-% each time at which maintenance is performed for a plain is penalized by 1
+% each time at which maintenance is performed for a plane is penalized by 1
 
 :~ maintain(P, T1, M). [1, P, T1]
 
@@ -109,7 +109,7 @@ violation_tat(F1, F2) :- compatible(F1, B, T1, F2, S2, T2), route(F1, F2),
 
 % DISPLAY
 
-% output assigned plains and maintenances for plains
+% output assigned planes and maintenances for planes
 
 #show assign/2.
 #show maintain/3.
