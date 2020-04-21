@@ -14,40 +14,44 @@ def main(prg):
         """ This function keep track of the global best solution and the current iteration best solution
         It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
         nonlocal current_best_solution
-        #nonlocal timer
+        nonlocal timer
         if len(m.cost) > 0:
-            #if timer.is_alive():
-             #   timer.cancel()
-              #  timer.join()
-            #timer = threading.Timer(60.0, prg.interrupt)
+            if timer.is_alive():
+                timer.cancel()
+                timer.join()
+            timer = threading.Timer(60.0, prg.interrupt)
             if m.cost[0] < current_best_solution:
                 current_best_solution = m.cost[0]
-            #if not timer.is_alive():
-             #   timer.start()
+            if not timer.is_alive():
+                timer.start()
 
     i = 0
     ret = None
     best_solutions = []
     all_time_best = float('inf')
-    while (len(best_solutions) < 2 or best_solutions[-2] >= best_solutions[-1]) and (ret is None or not ret.satisfiable):
-        #timer = threading.Timer(60.0, prg.interrupt)
-        #timer.start()
+    iteration_without_improvement = 0
+    while (len(best_solutions) == 0 or iteration_without_improvement < 3):
+        timer = threading.Timer(3600.0, prg.interrupt)
+        timer.start()
         current_best_solution = float('inf')
         parts = []
         parts.append(("step", [i]))
         if i == 0:
             parts.append(("base", []))
         prg.ground(parts)
-        i += 1
+        iteration_without_improvement += 1
         ret = prg.solve(on_model=handle_stop)
-        print("Current best {}".format(current_best_solution))
-        #if current_best_solution < float('inf'):
-         #   best_solutions.append(current_best_solution)
-          #  prg.add("step", [], "best({}).".format(current_best_solution))
-           # prg.ground([("step", [])])
-        #if timer.is_alive():
-         #   timer.cancel()
-          #  timer.join()
+        if current_best_solution < all_time_best:
+            all_time_best = current_best_solution
+            best_solutions.append(current_best_solution)
+            prg.add("step", [], "best({}, {}).".format(all_time_best, i))
+            prg.ground([("step", [])])
+            iteration_without_improvement = 0
+        i += 1
+        #print("Current best {}".format(min(best_solutions)))
+        if timer.is_alive():
+            timer.cancel()
+            timer.join()
 #end.
 
 #program step(t).
