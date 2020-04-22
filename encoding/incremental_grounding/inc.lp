@@ -28,9 +28,9 @@ def main(prg):
     i = 0
     ret = None
     best_solutions = []
-    all_time_best = float('inf')
+    all_time_best = 999999999999
     iteration_without_improvement = 0
-    while (len(best_solutions) == 0 or iteration_without_improvement < 3):
+    while (len(best_solutions) < 3) and (ret is None or not ret.satisfiable):
         timer = threading.Timer(3600.0, prg.interrupt)
         timer.start()
         current_best_solution = float('inf')
@@ -38,14 +38,15 @@ def main(prg):
         parts.append(("step", [i]))
         if i == 0:
             parts.append(("base", []))
+            #parts.append(("best", [5000]))
+        prg.add("base", [], "best({}).".format(all_time_best))
         prg.ground(parts)
         iteration_without_improvement += 1
         ret = prg.solve(on_model=handle_stop)
         if current_best_solution < all_time_best:
             all_time_best = current_best_solution
             best_solutions.append(current_best_solution)
-            prg.add("step", [], "best({}, {}).".format(all_time_best, i))
-            prg.ground([("step", [])])
+            #prg.add("base", [], "best({}).".format(all_time_best))
             iteration_without_improvement = 0
         i += 1
         #print("Current best {}".format(min(best_solutions)))
