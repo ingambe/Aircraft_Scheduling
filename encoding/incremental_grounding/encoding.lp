@@ -1,65 +1,69 @@
-#const iter_sec_increased = 3600.
+#const stepinc = 60.
 
 % GENERATOR
 
 #program base.
 
-compatible2(V1, V2, T2 - T1 - TAT) :- end(V1, T1), start(V2, T2), airport_end(V1, A1), airport_start(V2, A1), tat(V1, TAT), T1 < T2.
+compatible2(V1, V2, T2 - T1) :- flight(V1), flight(V2), end(V1, T1), start(V2, T2), start(V1, T3), airport_end(V1, A1), airport_start(V2, A1), T1 < T2, not first(V2, _).
+
+assign(V, A) :- first(V, A).
+assign(V, A) :- assigned(V, A, 0).
+
+:- flight(V), #count{A : assign(V, A)} != 1.
+
+:- flight(V), not first(V, _), not routed(in, V, 0).
+
+:- assign(V1, A) , assign(V2, A), #count{T : compatible2(V1, V2, T)} == 0, V1 != V2.
+
+#external routed(in, V, 0) : flight(V), not first(V, _).
+#external assigned(V, A, 0) : flight(V), aircraft(A), not first(V, _).
 
 maintenance_compatible(V, M) :- airport_maintenance(M, A), airport_end(V, A).
 
-routed(V, 1) :- first(V, _).
+{maintenance_after_flight(V, M)} :- maintenance_compatible(V, M).
 
-:- flight(V), not routed(V, 1).
+maintenance_plane(A, M, T) :- assign(V, A), maintenance_after_flight(V, M), end(V, T).
 
-#show best/1.
-:~ total_cost(C, t). [C]
+maintenance_coverage(F1, M) :- first(F1, A), maintenance(M).
+maintenance_coverage(F2, M) :- first(F1, A), assign(F2, A), start_maintenance_counter(M, A, C), limit_counter(M, L), end(F1, S1), LEFT = L - C, end(F2, S2), B = S2 - S1, B <= LEFT, S1 < S2.
+maintenance_coverage(F2, M) :- assign(F1, A), assign(F2, A), end(F1, T1), end(F2, T2), T1 < T2, maintenance_after_flight(F1, M), TIME = T2 - T1, limit_counter(M, L), TIME <= L.
+
+%:- maintenance(M), flight(V), not maintenance_coverage(V, M).
+
+:~ maintenance_after_flight(V, _). [101, V]
 
 #show assign/2.
 
-assign(V, A) :- first(V, A).
-assign(V, A) :- assigned(V, A, 1).
-
-attach(V, A) :- attached(V, A, 1).
-
-violation_tat(V1, V2, T) :- assign(V1, A), assign(V2, A), end(V1, T1), start(V2, T2), tat(V1, MIN), T = T1 + MIN - T2, T > 0, T1 < T2.
-total_cost(T1 + T2, t) :- K1 = #count{V : violation_tat(V, _, _)}, cost(tat, C1), T1 = K1 * C1, K2 = #count{V : attach(V, _)}, T2 = K2 * 101.
-#show attach/2.
-
-cover(F1, M) :- first(F1, A), maintenance(M).
-cover(F1, M) :- covered(F1, M, 1).
-
-:- flight(F), maintenance(M), not cover(F, M).
-
 #program step(t).
 
-#external routed(V, t+1) : flight(V).
-#external assigned(V, A, t+1) : flight(V), aircraft(A), not first(V, _).
-#external covered(V, M, t+1) : flight(V), maintenance(M), not first(V, _).
-#external attached(V, M, t+1) : flight(V), maintenance(M), maintenance_compatible(V, M).
-
-compatible(V1, V2, t) :- compatible2(V1, V2, T), (t-1) * iter_sec_increased <= T, T < t * iter_sec_increased.
+compatible(V1, V2, T, t) :- compatible2(V1, V2, T), (t-1) * 3600 <= T, T < t * 3600.
 
 % same aircraft assigned during the whole route
-{route(V1, V2, t) : compatible(V1, V2, t)} 1 :- flight(V1).
+{route(V1, V2, t) : compatible(V1, V2, T, t)} 1 :- flight(V1).
+{route(V1, V2, t) : compatible(V1, V2, T, t)} 1 :- flight(V2).
 
-assigned(V2, A, t) :- assign(V1, A), route(V1, V2, t).
-assigned(V2, A, t) :- assigned(V2, A, t+1).
+routed_now(in, V2, t)  :- route(V1, V2, t).
+routed_now(out, V1, t) :- route(V1, V2, t).
 
-{attach_maintenance(V, M, t)} :- routed(V, t), maintenance(M), maintenance_compatible(V, M).
+routed(X, V, t-1) :- routed_now(X, V, t).
+routed(X, V, t-1) :- routed(X, V, t).
 
-attached(V, M, t) :- attach_maintenance(V, M, t).
-attached(V, M, t) :- attached(V, M, t+1).
+:- routed_now(X, V, t-1), routed(X, V, t-1).
 
-:- attached(V, M, t), attach_maintenance(V, M, t-1).
+:- route(V1, V2, t), compatible(V1, V2, T, t), T < #sum+{N, M : maintenance_after_flight(V1, M), length_maintenance(M, N)}.
 
-covered(F2, M, t) :- first(F1, A), assigned(F2, A, t), start_maintenance_counter(M, A, C), limit_counter(M, L), end(F1, S1), LEFT = L - C, end(F2, S2), B = S2 - S1, B <= LEFT, S1 < S2.
-covered(F2, M, t) :- assign(F1, A), assigned(F2, A, t), attached(F1, M, t), end(F1, T1), end(F2, T2), T1 < T2, TIME = T2 - T1, limit_counter(M, L), TIME <= L.
-covered(F2, M, t) :- covered(F2, M, t+1).
+#external routed(in,V,t) : flight(V), not first(V, _).
+#external routed(out,V,t) : flight(V).
 
-routed_now(V2, t) :- route(V1, V2, t), flight(V2), not first(V2, _).
+assign_now(V2, A, t) :- assign(V1, A), route(V1, V2, t).
 
-routed(V, t) :- routed_now(V, t).
-routed(V, t) :- routed(V, t+1).
+assigned(V, A, t-1) :- assign_now(V, A, t).
+assigned(V, A, t-1) :- assigned(V, A, t).
 
-:- routed_now(V, t-1), routed(V, t).
+:- assign_now(V, A, t-1), assigned(V, A, t-1).
+
+#external assigned(V, A, t) : flight(V), aircraft(A), not first(V, _).
+
+violation_tat(V1, V2, T, t) :- route(V1, V2, t), compatible(V1, V2, T, t), tat(V1, MIN), T < MIN.
+
+:~ violation_tat(V1, V2, T, t), cost(tat, C). [C, V1]
