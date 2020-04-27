@@ -1,4 +1,4 @@
-#const stepinc = 600.
+#const second_inc=600.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% FLIGHT ALLOCATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -7,7 +7,6 @@
 
 assign(F, A) :- first(F, A).
 assign(F2, A) :- assign(F1, A), aircraft(A), route(F1, F2), not first(F2, A).
-
 
 :- flight(F), #count{A : assign(F, A)} != 1.
 
@@ -49,11 +48,7 @@ computed_cost(maintenance, T * 101) :- #count{F: maintenance_after_flight(F, _)}
 %#show compatible/3.
 %#show route/2.
 
-%*
-ddd
-*%
-
-#external compatible(F1, F2, T2 - T1 - TAT): end(F1, T1), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, tat(F1, TAT).
+#external compatible(F1, F2, T2 - T1 - TAT) : end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2.
 
 #script (python)
 
@@ -87,8 +82,9 @@ def main(prg):
     best_solutions = []
     all_time_best = 999999999
     iteration_without_improvement = 0
+    current_best_solution = float('inf')
     while (len(best_solutions) < 1 or iteration_without_improvement < 3) and (ret is None or not ret.satisfiable):
-        timer = threading.Timer(3600.0, prg.interrupt)
+        timer = threading.Timer(60.0, prg.interrupt)
         timer.start()
         current_best_solution = float('inf')
         parts = []
@@ -111,4 +107,4 @@ def main(prg):
 
 #program step(t).
 
-compatible(F1, F2, T - TAT) :- end(F1, T1), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, not first(F2, _), tat(F1, TAT), T = T2 - T1, (t-1) * stepinc <= T, T < t * stepinc.
+compatible(F1, F2, T - TAT) :- end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, not first(F2, _), T = T2 - T1, (t-1) * second_inc <= T, T < t * second_inc.
