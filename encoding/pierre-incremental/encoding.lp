@@ -40,13 +40,10 @@ computed_cost(maintenance, T * 101) :- #count{F: maintenance_after_flight(F, _)}
 
 :~ computed_cost(maintenance, C). [C@1]
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SHOW %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #show assign/2.
-%#show maintenance_after_flight/2.
-%#show compatible/3.
-%#show route/2.
+#show maintenance_after_flight/2.
 
 #external compatible(F1, F2, T2 - T1 - TAT) : end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2.
 
@@ -72,8 +69,8 @@ def main(prg):
                 timer.cancel()
                 timer.join()
             timer = threading.Timer(60.0, prg.interrupt)
-            if m.cost[0] < current_best_solution:
-                current_best_solution = m.cost[0]
+            if sum(m.cost) < current_best_solution:
+                current_best_solution = sum(m.cost)
             if not timer.is_alive():
                 timer.start()
 
@@ -83,7 +80,8 @@ def main(prg):
     all_time_best = 999999999
     iteration_without_improvement = 0
     current_best_solution = float('inf')
-    while (len(best_solutions) < 1 or iteration_without_improvement < 3) and (ret is None or not ret.satisfiable):
+    # i < 1000 in case there is no solution at all
+    while (len(best_solutions) < 1 or iteration_without_improvement < 3) and i < 1000:
         timer = threading.Timer(60.0, prg.interrupt)
         timer.start()
         current_best_solution = float('inf')
@@ -99,7 +97,6 @@ def main(prg):
             best_solutions.append(current_best_solution)
             iteration_without_improvement = 0
         i += 1
-        #print("Current best {}".format(min(best_solutions)))
         if timer.is_alive():
             timer.cancel()
             timer.join()

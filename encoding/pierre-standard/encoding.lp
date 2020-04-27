@@ -9,6 +9,7 @@ assign(F, A) :- first(F, A).
 assign(F2, A) :- assign(F1, A), aircraft(A), route(F1, F2), not first(F2, A).
 
 #show assign/2.
+#show maintenance_after_flight/2.
 
 :- flight(F), #count{A : assign(F, A)} != 1.
 

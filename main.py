@@ -13,6 +13,7 @@ sys.path.append(
 
 from Flight import *
 from Solution import *
+
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance_generator')))
 import route_gen
@@ -28,7 +29,6 @@ def gantt_solution(instance, solution):
     instance = instance.replace(" ", "")
     solution = solution.replace(" ", "")
 
-
     # utility for the parsing of inside each rule
     number_regex = re.compile(r'[0-9]+')
     # some regex to parse the data
@@ -42,7 +42,7 @@ def gantt_solution(instance, solution):
     end_regex = re.compile(r'end\([0-9]+,[0-9]+\)')
     tat_regex = re.compile(r'tat\([0-9]+,[0-9]+\)')
     assign_regex = re.compile(r'assign\([0-9]+,[0-9]+\)')
-    maintenance_regex = re.compile(r'attach_maintenance\([0-9]+,[0-9]+,[0-9]+\)')
+    maintenance_regex = re.compile(r'maintenance_after_flight\([0-9]+,[0-9]+\)')
     length_maintenance_regex = re.compile(r'length_maintenance\(seven_day,[0-9]+\)')
     maintenance_length = dict()
     if len(length_maintenance_regex.findall(instance)) > 0:
@@ -52,7 +52,6 @@ def gantt_solution(instance, solution):
     airport_maintenance = airport_maintenance_regex.findall(instance)
     airport_maintenance_int = dict()
     airport_maintenance_int["seven_day"] = [int(number_regex.findall(x)[0]) for x in airport_maintenance]
-
 
     limit_counter_regex = re.compile(r'limit_counter\(seven_day,[0-9]+\)')
     limit_counter = limit_counter_regex.findall(instance)
@@ -73,8 +72,6 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         start_maint_count["seven_day"][numbers[0] - 1] = numbers[1]
-
-
 
     # we get the airport start
     airports_start = [-1 for i in range(number_flights)]
@@ -128,7 +125,8 @@ def gantt_solution(instance, solution):
     flights = [None for x in range(number_flights)]
     for i in range(number_flights):
         length_flight = end[i] - start[i]
-        flight = Flight(i + 1, start[i], length_flight, airports_start[i], airports_end[i], fligth_aircraft_assigned[i], tat[i])
+        flight = Flight(i + 1, start[i], length_flight, airports_start[i], airports_end[i], fligth_aircraft_assigned[i],
+                        tat[i])
         flights[i] = flight
 
     flights_created = dict()
@@ -138,7 +136,7 @@ def gantt_solution(instance, solution):
         if not (start_airport, end_airport) in flights_created:
             flights_created[(start_airport, end_airport)] = flights[i]
 
-    #print("flights {}".format(flights))    
+    # print("flights {}".format(flights))
     # now the solution model
     parsed = aircraft_regex.findall(instance)
     number_aircrafts = len(parsed)
@@ -151,7 +149,8 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         first_flight_assigned[numbers[1] - 1] = flights[numbers[0] - 1]
-    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, 500, 5000, flights_created, start_maint_count, limit_counter_dict, maintenance_length, airport_maintenance_int)
+    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, 500, 5000, flights_created,
+                        start_maint_count, limit_counter_dict, maintenance_length, airport_maintenance_int)
     answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
     answer_temp.write(repr(solution))
     route_gen.gannt(solution)
@@ -165,17 +164,17 @@ def main():
     parser.add_argument('--gantt', action='store_true', help="output the gannt of the solution")
     args = parser.parse_args()
     instance = args.instance
-    output_file = "solution_" + instance.split("/")[-1]
+    output_file = "solution_" + instance.split("/")[-1] + ".lp"
     if args.output_file is not None:
-        output_file =  args.output_file
+        output_file = args.output_file
     start = time.time()
     if args.input is not None:
         clingo = subprocess.Popen(["clingo"] + [instance] + [args.input] + ["--outf=2"],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    else:
-        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/martin-simple-inc/simple-inc.lp'] + ['encoding/martin-simple-inc/inc.lp'] + ["--outf=2"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
+    else:
+        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/pierre-incremental/encoding.lp'] + ["--outf=2"],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
     #                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutdata, stderrdata) = clingo.communicate()
     clingo.wait()
@@ -205,18 +204,19 @@ def main():
     # we append "" just to get the last . when we join latter
     answer = answer["Value"] + [""]
     answer_str = ".".join(answer)
-    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+    answer_temp = open(output_file, "w+")
+    # answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
     answer_temp.write(answer_str)
     # this line is to wait to have finish to write
     answer_temp.flush()
     clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [answer_temp.name] + [
-                instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
     clingo_check.wait()
     json_check = json.loads(stdoutdata_check)
     print("Best solution cost {}".format(cost))
     answer_temp.close()
-    os.remove(basename(answer_temp.name))
+    # os.remove(basename(answer_temp.name))
 
     if not json_check["Result"] == "SATISFIABLE":
         correct_solution = False
@@ -233,5 +233,5 @@ def main():
         gantt_solution(answer, answer_str)
 
 
-if __name__== "__main__":
-      main()
+if __name__ == "__main__":
+    main()
