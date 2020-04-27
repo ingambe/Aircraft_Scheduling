@@ -78,10 +78,13 @@ def main():
             for call_current in json_answers["Call"]:
                 if "Witnesses" in call_current:
                     answer_current = call_current["Witnesses"][-1]
-                    current_cost = answer_current["Costs"][0]
-                    if current_cost < cost:
-                        answer = answer_current
-                        cost = current_cost
+                    if "Costs" in answer_current:
+                        current_cost = sum(answer_current["Costs"])
+                        if current_cost < cost:
+                            answer = answer_current
+                            cost = current_cost
+                    else:
+                        cost = 0
             # if it's not an intermediate call (needed for incremental grouding)
             if not args.no_check:
                 # we append "" just to get the last . when we join latter
@@ -113,7 +116,7 @@ def main():
         results.append(result_iteration)
         costs_run.append(cost_iteration)
         instance_temp.close()
-        os.remove(instance_temp.name)
+        os.remove(basename(instance_temp.name))
     df = pd.DataFrame(results)
     now = datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")

@@ -173,7 +173,7 @@ def main():
         clingo = subprocess.Popen(["clingo"] + [instance] + [args.input] + ["--outf=2"],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
-        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/pierre-standard/encoding.lp'] + ["--outf=2"],
+        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/martin-simple-inc/simple-inc.lp'] + ['encoding/martin-simple-inc/inc.lp'] + ["--outf=2"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
    # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
     #                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -205,7 +205,7 @@ def main():
     # we append "" just to get the last . when we join latter
     answer = answer["Value"] + [""]
     answer_str = ".".join(answer)
-    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=True)
+    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
     answer_temp.write(answer_str)
     # this line is to wait to have finish to write
     answer_temp.flush()
@@ -216,7 +216,7 @@ def main():
     json_check = json.loads(stdoutdata_check)
     print("Best solution cost {}".format(cost))
     answer_temp.close()
-    #os.remove(answer_temp.name)
+    os.remove(basename(answer_temp.name))
 
     if not json_check["Result"] == "SATISFIABLE":
         correct_solution = False
