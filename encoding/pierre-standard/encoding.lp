@@ -41,7 +41,3 @@ computed_cost(tat, T * C) :- #count{F: violation_tat(F, _, _)} = T, cost(tat, C)
 computed_cost(maintenance, T * 101) :- #count{F: maintenance_after_flight(F, _)} = T.
 
 :~ computed_cost(maintenance, C). [C@1]
-
-%*
-ddd
-*%
