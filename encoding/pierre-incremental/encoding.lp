@@ -1,5 +1,12 @@
 #const second_inc=600.
 
+#const weight_tat = 500.
+#const level_tat = 1.
+#const weight_maintenance = 101.
+#const level_maintenance = 2.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%% FLIGHT ALLOCATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 {route(F1, F2) : compatible(F1, F2, T)} 1 :- flight(F1).
@@ -25,20 +32,12 @@ maintenance_coverage(F2, M) :- assign(F1, A), assign(F2, A), end(F1, T1), end(F2
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OPTIMISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% TAT
-violation_tat(F1, F2, T) :- route(F1, F2), compatible(F1, F2, T), T < 0.
+cost(tat, weight_tat, level_tat).
+cost(maintenance, weight_maintenance, level_maintenance).
 
-%:~ violation_tat(F1, F2, T), cost(tat, C). [C, F1]
+:~ route(F1, F2), compatible(F1, F2, T), T < 0, cost(tat, C, L). [C@L, F1, tat]
 
-computed_cost(tat, T * C) :- #count{F: violation_tat(F, _, _)} = T, cost(tat, C).
-
-:~ computed_cost(tat, C). [C@2]
-
-%%% MAINTENANCE
-
-computed_cost(maintenance, T * 101) :- #count{F: maintenance_after_flight(F, _)} = T.
-
-:~ computed_cost(maintenance, C). [C@1]
+:~ maintenance_after_flight(F, M), cost(maintenance, C, L). [C@L, F, maintenance]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SHOW %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -62,29 +61,29 @@ def main(prg):
     def handle_stop(m):
         """ This function keep track of the global best solution and the current iteration best solution
         It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
-        nonlocal current_best_solution
+        nonlocal local_best_solution
         nonlocal timer
         if len(m.cost) > 0:
             if timer.is_alive():
                 timer.cancel()
                 timer.join()
             timer = threading.Timer(60.0, prg.interrupt)
-            if sum(m.cost) < current_best_solution:
-                current_best_solution = sum(m.cost)
+            if sum(m.cost) < sum(local_best_solution):
+                local_best_solution = m.cost
             if not timer.is_alive():
                 timer.start()
 
     i = 0
     ret = None
-    best_solutions = []
-    all_time_best = 999999999
+    solution_found = False
+    all_time_best = [float('inf')]
     iteration_without_improvement = 0
     current_best_solution = float('inf')
     # i < 1000 in case there is no solution at all
-    while (len(best_solutions) < 1 or iteration_without_improvement < 3) and i < 1000:
+    while (not solution_found or iteration_without_improvement < 3) and i < 1000:
         timer = threading.Timer(60.0, prg.interrupt)
         timer.start()
-        current_best_solution = float('inf')
+        local_best_solution = [float('inf')]
         parts = []
         parts.append(("step", [i]))
         if i == 0:
@@ -92,9 +91,10 @@ def main(prg):
         prg.ground(parts)
         iteration_without_improvement += 1
         ret = prg.solve(on_model=handle_stop)
-        if current_best_solution < all_time_best:
-            all_time_best = current_best_solution
-            best_solutions.append(current_best_solution)
+        if sum(local_best_solution) < sum(all_time_best):
+            all_time_best = local_best_solution
+            solution_found = True
+            prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
             iteration_without_improvement = 0
         i += 1
         if timer.is_alive():

@@ -14,8 +14,6 @@ start_maintenance_counter(seven_day, 8, 429396).
 start_maintenance_counter(seven_day, 9, 265599).
 start_maintenance_counter(seven_day, 10, 318424).
 limit_counter(seven_day, 604800).
-cost(tat, 500).
-cost(sb, 5000).
 aircraft(1..10).
 airport(1..20).
 flight(1..188).

@@ -6,8 +6,6 @@ airport_maintenance(seven_day, 3).
 start_maintenance_counter(seven_day, 1, 0).
 start_maintenance_counter(seven_day, 2, 0).
 limit_counter(seven_day, 604800).
-cost(tat, 500).
-cost(sb, 5000).
 
 aircraft(1..2).
 airport(1..3).
