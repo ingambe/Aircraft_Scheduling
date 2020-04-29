@@ -1,11 +1,10 @@
 #const second_inc=600.
 
-#const weight_tat = 500.
-#const level_tat = 1.
 #const weight_maintenance = 101.
-#const level_maintenance = 2.
+#const level_maintenance = 1.
 
-
+#const weight_tat = 500.
+#const level_tat = 2.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% FLIGHT ALLOCATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -74,13 +73,14 @@ def main(prg):
                 timer.start()
 
     i = 0
+    nb_symbolic = 0
+    iteration_between_two_new_atom = 100
     ret = None
     solution_found = False
     all_time_best = [float('inf')]
     iteration_without_improvement = 0
     current_best_solution = float('inf')
-    # i < 1000 in case there is no solution at all
-    while (not solution_found or iteration_without_improvement < 3) and i < 1000:
+    while (not solution_found or iteration_without_improvement < 3) and iteration_between_two_new_atom > 0:
         timer = threading.Timer(60.0, prg.interrupt)
         timer.start()
         local_best_solution = [float('inf')]
@@ -89,6 +89,10 @@ def main(prg):
         if i == 0:
             parts.append(("base", []))
         prg.ground(parts)
+        # if we have new atoms, we reset the counter of new atoms before stopping
+        if len(prg.symbolic_atoms) > nb_symbolic:
+            nb_symbolic = len(prg.symbolic_atoms)
+            iteration_between_two_new_atom = 100
         iteration_without_improvement += 1
         ret = prg.solve(on_model=handle_stop)
         if sum(local_best_solution) < sum(all_time_best):

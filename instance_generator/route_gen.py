@@ -53,14 +53,15 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                        long=default_force,
                        long_ground_time=default_ground_force,
                        short=default_short,
-                       short_violation=default_short_violation,
-                       tat_cost=default_tat_cost,
-                       sb_cost=default_sb_cost):
+                       short_violation=default_short_violation):
     ''' This function generate a Solution model '''
+
+    tat_cost = 500
 
     # all the flight and maintenance created and allocated to an aircraft
     flights_and_maintenances = []
     flights = []
+
 
     if long:
         nb_aircraft += 1
@@ -283,7 +284,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     flights.append(flight_object)
                     flights_and_maintenances.append(flight_object)
 
-    solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft, tat_cost, sb_cost
+    solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft
                                , flights_created, second_initial_counter, limit_second_last_maintenance, LENGTH_SEC_MAINTENANCE, AIRPORTS_MAINTENANCE)
     if long:
         # we have added two airports for the two special long airport

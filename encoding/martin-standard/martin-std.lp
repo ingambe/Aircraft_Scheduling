@@ -1,3 +1,9 @@
+#const weight_maintenance = 101.
+#const level_maintenance = 1.
+
+#const weight_tat = 500.
+#const level_tat = 2.
+
 % auxiliary predicates for (preassigned) flights
 
 flight(F, A, S, B, T) :- flight(F),
@@ -147,11 +153,12 @@ covered(M, S, T, P) :- maintain(M, T1, P),
 
 % minimize maintenances and tat violations
 
-:~ maintain(M, T, P). [101, T, P]
+cost(tat, weight_tat, level_tat).
+cost(maintenance, weight_maintenance, level_maintenance).
 
-violation_tat(F1, F2) :- route(F1, F2, G), tat(F1, D), G < D.
+:~ route(F1, F2, G), tat(F1, D), G < D, cost(tat, C, L). [C@L, F1, tat]
 
-:~ violation_tat(F1, F2), cost(tat, K). [K, F1]
+:~ maintain(M, F, P), cost(maintenance, C, L). [C@L, F, maintenance]
 
 % output flight assignment and maintenances
 

@@ -1,5 +1,11 @@
 #const stepinc = 60.
 
+#const weight_maintenance = 101.
+#const level_maintenance = 1.
+
+#const weight_tat = 500.
+#const level_tat = 2.
+
 #program base.
 
 % auxiliary predicates for flights and maintenances
@@ -98,10 +104,6 @@ covered(M, S, T, P) :- maintain(M, T1, P),
    not guaranteed(M, S, T, P),
    not covered(M, S, T, P).
 
-% minimize maintenances
-
-:~ maintain(M, T, P). [101, T, P]
-
 #program step(t).
 
 % incrementally generate the routing
@@ -122,9 +124,12 @@ forbid(T, G, P) :- mainduration(B, T, G, t),
 
 % incrementally minimize tat violations
 
-violation_tat(F1, F2, t) :- route(F1, F2, G, t), tat(F1, D), G < D.
+cost(tat, weight_tat, level_tat).
+cost(maintenance, weight_maintenance, level_maintenance).
 
-:~ violation_tat(F1, F2, t), cost(tat, K). [K, F1]
+:~ route(F1, F2, G, t), tat(F1, D), G < D, cost(tat, C, L). [C@L, F1, tat]
+
+:~ maintain(M, F, P), cost(maintenance, C, L). [C@L, F, maintenance]
 
 % output flight assignment and maintenances
 

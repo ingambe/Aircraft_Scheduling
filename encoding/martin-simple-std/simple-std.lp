@@ -1,4 +1,13 @@
-% auxiliary predicates for flights and maintenances
+% auxiliary predicates for flights and maintenance
+
+
+#const weight_maintenance = 101.
+#const level_maintenance = 1.
+
+#const weight_tat = 500.
+#const level_tat = 2.
+
+cost(tat, 500).
 
 flight(F, A, S, B, T) :- flight(F),
                          airport_start(F, A), start(F, S),
@@ -28,12 +37,12 @@ maintainable(M, N, F1, B, T1) :- compatible(F1, B, T1, F2, G),
 maintainable(M, N, B, T1)     :- maintainable(M, N, F1, B, T1).
 maintainable(M, T1)           :- maintainable(M, N, B, T1).
 
-maintenances(B, T1)    :- maintainable(M, N, B, T1).
-maintenances(B, T1, O) :- maintenances(B, T1),
+maintenance(B, T1)    :- maintainable(M, N, B, T1).
+maintenance(B, T1, O) :- maintenance(B, T1),
                           O = #sum+{N, M : maintainable(M, N, B, T1)}.
 
-mainduration(B, T1, G) :- compatible(B, T1, G),
-                          maintenances(B, T1, O), G < O.
+maintenance_duration(B, T1, G) :- compatible(B, T1, G),
+                          maintenance(B, T1, O), G < O.
 
 initial(M, T1, T, P) :- fixed(F, A, S1, B, T1, P),
                         maintenance(M, L),
@@ -71,7 +80,7 @@ assign(F2, P) :- route(F1, F2, G), assign(F1, P).
 :- flight(F, A, S, B, T),
    #count{P : assign(F, P)} != 1.
 
-% generate maintenances
+% generate maintenance
 
 {maintain(M, T, P)} :- maintainable(M, T),
                        fixed(F1, A, S1, B, T1, P), T1 <= T.
@@ -79,13 +88,13 @@ assign(F2, P) :- route(F1, F2, G), assign(F1, P).
 :- maintain(M, T, P),
    not assign(F, P) : maintainable(M, N, F, B, T).
 
-forbid(T, G, P) :- mainduration(B, T, G),
+forbid(T, G, P) :- maintenance_duration(B, T, G),
                    fixed(F1, A1, S1, B1, T1, P), T1 <= T,
                    G < #sum+{N, M : maintainable(M, N, B, T),
                                     maintain(M, T, P)}.
 
 :- compatible(B, T, F, G),
-   mainduration(B, T, G),
+   maintenance_duration(B, T, G),
    forbid(T, G, P),
    assign(F, P).
 
@@ -99,15 +108,15 @@ covered(M, S, T, P) :- maintain(M, T1, P),
    not guaranteed(M, S, T, P),
    not covered(M, S, T, P).
 
-% minimize maintenances and tat violations
+% minimize maintenance and tat violations
 
-:~ maintain(M, T, P). [101, T, P]
+cost(tat, weight_tat, level_tat).
+cost(maintenance, weight_maintenance, level_maintenance).
 
-violation_tat(F1, F2) :- route(F1, F2, G), tat(F1, D), G < D.
+:~ route(F1, F2, G), tat(F1, D), G < D, cost(tat, C, L). [C@L, F1, tat]
 
-:~ violation_tat(F1, F2), cost(tat, K). [K, F1]
+:~ maintain(M, F, P), cost(maintenance, C, L). [C@L, F, maintenance]
 
-% output flight assignment and maintenances
-
+% output flight assignment and maintenance
 #show assign/2.
 #show maintain/3.

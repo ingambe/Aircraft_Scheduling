@@ -1,12 +1,10 @@
 class Solution(object):
-    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft, tat_cost, sb_cost,
+    def __init__(self, nb_aircraft, nb_airport, fligths, first_fligth_aircraft,
                  unique_flights, start_counters, max_counters, length_maintenance, airport_maintenance):
         self.nb_aircraft = nb_aircraft
         self.nb_airport = nb_airport
         self.flights = fligths
         self.first_fligth_aircraft = first_fligth_aircraft
-        self.tat_cost = tat_cost
-        self.sb_cost = sb_cost
         self.unique_flights = unique_flights
         # this contains all flight assigned to each aircraft, thus it will be easier to generate a readable solution
         self.flight_of_aircraft = [[] for i in range(self.nb_aircraft)]
@@ -29,8 +27,6 @@ class Solution(object):
                                                                             self.start_counters[maintenance_type][aircraft])
         for maintenance_type in self.max_counters:
             result += "limit_counter({}, {}).\n".format(maintenance_type, self.max_counters[maintenance_type])
-        result += "cost(tat, {}).\n".format(self.tat_cost)
-        result += "cost(sb, {}).\n".format(self.sb_cost)
         result += "aircraft(1..{}).\n".format(self.nb_aircraft)
         result += "airport(1..{}).\n".format(self.nb_airport)
         result += "flight(1..{}).\n".format(len(self.flights))

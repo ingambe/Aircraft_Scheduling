@@ -1,3 +1,9 @@
+#const weight_maintenance = 101.
+#const level_maintenance = 1.
+
+#const weight_tat = 500.
+#const level_tat = 2.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%% FLIGHT ALLOCATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 compatible(F1, F2, T2 - T1 - TAT) :- end(F1, T1), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, not first(F2, _), tat(F1, TAT).
@@ -28,17 +34,9 @@ maintenance_coverage(F2, M) :- assign(F1, A), assign(F2, A), end(F1, T1), end(F2
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OPTIMISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% TAT
-violation_tat(F1, F2, T) :- route(F1, F2), compatible(F1, F2, T), T < 0.
+cost(tat, weight_tat, level_tat).
+cost(maintenance, weight_maintenance, level_maintenance).
 
-%:~ violation_tat(F1, F2, T), cost(tat, C). [C, F1]
+:~ route(F1, F2), compatible(F1, F2, T), T < 0, cost(tat, C, L). [C@L, F1, tat]
 
-computed_cost(tat, T * C) :- #count{F: violation_tat(F, _, _)} = T, cost(tat, C).
-
-:~ computed_cost(tat, C). [C@2]
-
-%%% MAINTENANCE
-
-computed_cost(maintenance, T * 101) :- #count{F: maintenance_after_flight(F, _)} = T.
-
-:~ computed_cost(maintenance, C). [C@1]
+:~ maintenance_after_flight(F, M), cost(maintenance, C, L). [C@L, F, maintenance]
