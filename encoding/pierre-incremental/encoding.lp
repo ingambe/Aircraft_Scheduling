@@ -98,12 +98,19 @@ def main(prg):
         if sum(local_best_solution) < sum(all_time_best):
             all_time_best = local_best_solution
             solution_found = True
-            prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
+            if len(all_time_best) > 1:
+                prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
+            else:
+                prg.configuration.solve.opt_mode = "opt,{}".format(all_time_best[0])
+
             iteration_without_improvement = 0
         i += 1
         if timer.is_alive():
             timer.cancel()
             timer.join()
+    if timer.is_alive():
+        timer.cancel()
+        timer.join()
 #end.
 
 #program step(t).

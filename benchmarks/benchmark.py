@@ -52,23 +52,21 @@ def main():
         cost_iteration["upper_bound"] = minimal_cost
         instance_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
         instance_temp.write(repr(instance))
+        instance_temp.flush()
         for encoding in encodings:
             print("Encoding {}:".format(encoding))
             files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if isfile(join("../encoding/" + encoding, f))]
             start = time.time()
             clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (stdoutdata, stderrdata) = clingo.communicate()
+            try:
+                (stdoutdata, stderrdata) = clingo.communicate(timeout=1800)
+            except subprocess.TimeoutExpired:
+                clingo.kill()
+                (stdoutdata, stderrdata) = clingo.communicate()
             clingo.wait()
             end = time.time()
             duration = end - start
-            #print("out: {}".format(stdoutdata))
-            #print("error: {}".format(stderrdata))
-            #print(stdoutdata)
             json_answers = json.loads(stdoutdata)
-
-            #call = json_answers["Call"][-1]
-            #answer = call["Witnesses"][-1]
-            #cost = answer["Costs"][0]
 
             correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
             cost = float('inf')
@@ -97,7 +95,6 @@ def main():
                 clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
                 clingo_check.wait()
-                #print("stdoudata check : {}".format(stdoutdata_check))
                 json_check = json.loads(stdoutdata_check)
                 answer_temp.close()
                 os.remove(answer_temp.name)
