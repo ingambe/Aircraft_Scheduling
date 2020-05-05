@@ -57,12 +57,8 @@ def main():
             print("Encoding {}:".format(encoding))
             files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if isfile(join("../encoding/" + encoding, f))]
             start = time.time()
-            clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            try:
-                (stdoutdata, stderrdata) = clingo.communicate(timeout=1800)
-            except subprocess.TimeoutExpired:
-                clingo.kill()
-                (stdoutdata, stderrdata) = clingo.communicate()
+            clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"] + ["--time-limit=600"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (stdoutdata, stderrdata) = clingo.communicate()
             clingo.wait()
             end = time.time()
             duration = end - start

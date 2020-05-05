@@ -73,7 +73,7 @@ def main(prg):
                 timer.start()
 
     i = 0
-    nb_symbolic = 0
+    max_number_atom = 0
     iteration_between_two_new_atom = 100
     ret = None
     solution_found = False
@@ -82,35 +82,39 @@ def main(prg):
     current_best_solution = float('inf')
     while (not solution_found or iteration_without_improvement < 3) and iteration_between_two_new_atom > 0:
         timer = threading.Timer(60.0, prg.interrupt)
-        timer.start()
+        #iteration_between_two_new_atom -= 1
         local_best_solution = [float('inf')]
         parts = []
         parts.append(("step", [i]))
         if i == 0:
             parts.append(("base", []))
-        prg.ground(parts)
-        # if we have new atoms, we reset the counter of new atoms before stopping
-        if len(prg.symbolic_atoms) > nb_symbolic:
-            nb_symbolic = len(prg.symbolic_atoms)
-            iteration_between_two_new_atom = 100
-        iteration_without_improvement += 1
-        ret = prg.solve(on_model=handle_stop)
-        if sum(local_best_solution) < sum(all_time_best):
-            all_time_best = local_best_solution
-            solution_found = True
-            if len(all_time_best) > 1:
-                prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
-            else:
-                prg.configuration.solve.opt_mode = "opt,{}".format(all_time_best[0])
 
-            iteration_without_improvement = 0
+        prg.ground(parts)
+        number_atom = 0
+        for x in prg.symbolic_atoms.by_signature("compatible", 3):
+            if x.is_fact:
+                number_atom += 1
+        # if we have new atoms, we reset the counter of new atoms before stopping
+        if number_atom > max_number_atom:
+            timer.start()
+            max_number_atom = number_atom
+            iteration_between_two_new_atom = 100
+            ret = prg.solve(on_model=handle_stop)
+            if sum(local_best_solution) < sum(all_time_best):
+                all_time_best = local_best_solution
+                solution_found = True
+                if len(all_time_best) > 1:
+                    prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
+                else:
+                    prg.configuration.solve.opt_mode = "opt,{}".format(all_time_best[0])
+
+                iteration_without_improvement = 0
+            else:
+                iteration_without_improvement += 1
         i += 1
         if timer.is_alive():
             timer.cancel()
             timer.join()
-    if timer.is_alive():
-        timer.cancel()
-        timer.join()
 #end.
 
 #program step(t).
