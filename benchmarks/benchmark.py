@@ -57,55 +57,57 @@ def main():
             print("Encoding {}:".format(encoding))
             files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if isfile(join("../encoding/" + encoding, f))]
             start = time.time()
-            clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"] + ["--time-limit=600"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (stdoutdata, stderrdata) = clingo.communicate()
-            clingo.wait()
-            end = time.time()
-            duration = end - start
-            json_answers = json.loads(stdoutdata)
+            try:
+                clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (stdoutdata, stderrdata) = clingo.communicate(timeout=3600)
+                clingo.wait()
+                end = time.time()
+                duration = end - start
+                json_answers = json.loads(stdoutdata)
 
-            correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
-            cost = float('inf')
-            call = json_answers["Call"][-1]
-            answer = call["Witnesses"][-1]
-            # we need to check all solution and get the best one
-            for call_current in json_answers["Call"]:
-                if "Witnesses" in call_current:
-                    answer_current = call_current["Witnesses"][-1]
-                    if "Costs" in answer_current:
-                        current_cost = sum(answer_current["Costs"])
-                        if current_cost < cost:
-                            answer = answer_current
-                            cost = current_cost
-                    else:
-                        cost = 0
-            # if it's not an intermediate call (needed for incremental grouding)
-            if not args.no_check:
-                # we append "" just to get the last . when we join latter
-                answer = answer["Value"] + [""]
-                answer_str = ".".join(answer)
-                answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
-                answer_temp.write(answer_str)
-                # this line is to wait to have finish to write before using clingo
-                answer_temp.flush()
-                clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
-                clingo_check.wait()
-                json_check = json.loads(stdoutdata_check)
-                answer_temp.close()
-                os.remove(answer_temp.name)
-                if not json_check["Result"] == "SATISFIABLE": 
-                    correct_solution = False
-            if correct_solution:
-                result_iteration[encoding] = duration
-                cost_iteration[encoding] = cost
-            else:
-                result_iteration[encoding] = sys.maxsize
-                cost_iteration[encoding] = float("inf")
-            print("\tSatisfiable {}".format(correct_solution))
-            print("\tDuration {} seconds".format(result_iteration[encoding]))
-            print("\tBest solution {}".format(cost))
-            print("\tUpper bound {}".format(minimal_cost))
+                correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
+                cost = float('inf')
+                # we need to check all solution and get the best one
+                for call_current in json_answers["Call"]:
+                    if "Witnesses" in call_current:
+                        answer_current = call_current["Witnesses"][-1]
+                        if "Costs" in answer_current:
+                            current_cost = sum(answer_current["Costs"])
+                            if current_cost < cost:
+                                answer = answer_current
+                                cost = current_cost
+                        else:
+                            cost = 0
+                # if it's not an intermediate call (needed for incremental grouding)
+                if not args.no_check:
+                    # we append "" just to get the last . when we join latter
+                    answer = answer["Value"] + [""]
+                    answer_str = ".".join(answer)
+                    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+                    answer_temp.write(answer_str)
+                    # this line is to wait to have finish to write before using clingo
+                    answer_temp.flush()
+                    clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
+                    clingo_check.wait()
+                    json_check = json.loads(stdoutdata_check)
+                    answer_temp.close()
+                    os.remove(answer_temp.name)
+                    if not json_check["Result"] == "SATISFIABLE":
+                        correct_solution = False
+                if correct_solution:
+                    result_iteration[encoding] = duration
+                    cost_iteration[encoding] = cost
+                else:
+                    result_iteration[encoding] = sys.maxsize
+                    cost_iteration[encoding] = float("inf")
+                print("\tSatisfiable {}".format(correct_solution))
+                print("\tDuration {} seconds".format(result_iteration[encoding]))
+                print("\tBest solution {}".format(cost))
+                print("\tUpper bound {}".format(minimal_cost))
+            except subprocess.TimeoutExpired:
+                result_iteration = float('inf')
+                cost_iteration = float('inf')
         results.append(result_iteration)
         costs_run.append(cost_iteration)
         instance_temp.close()
