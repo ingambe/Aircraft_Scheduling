@@ -1,6 +1,5 @@
 % auxiliary predicates for flights and maintenance
 
-
 #const weight_maintenance = 101.
 #const level_maintenance = 1.
 
