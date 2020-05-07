@@ -59,7 +59,7 @@ def main():
             start = time.time()
             try:
                 clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (stdoutdata, stderrdata) = clingo.communicate(timeout=3600)
+                (stdoutdata, stderrdata) = clingo.communicate(timeout=7200)
                 clingo.wait()
                 end = time.time()
                 duration = end - start
@@ -67,6 +67,7 @@ def main():
 
                 correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
                 cost = float('inf')
+                answer = []
                 # we need to check all solution and get the best one
                 for call_current in json_answers["Call"]:
                     if "Witnesses" in call_current:
@@ -74,14 +75,14 @@ def main():
                         if "Costs" in answer_current:
                             current_cost = sum(answer_current["Costs"])
                             if current_cost < cost:
-                                answer = answer_current
+                                answer = answer_current["Value"]
                                 cost = current_cost
                         else:
                             cost = 0
                 # if it's not an intermediate call (needed for incremental grouding)
                 if not args.no_check:
                     # we append "" just to get the last . when we join latter
-                    answer = answer["Value"] + [""]
+                    answer = answer + [""]
                     answer_str = ".".join(answer)
                     answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
                     answer_temp.write(answer_str)
@@ -95,7 +96,7 @@ def main():
                     os.remove(answer_temp.name)
                     if not json_check["Result"] == "SATISFIABLE":
                         correct_solution = False
-                if correct_solution:
+                if correct_solution and len(answer) > 1:
                     result_iteration[encoding] = duration
                     cost_iteration[encoding] = cost
                 else:
@@ -106,8 +107,7 @@ def main():
                 print("\tBest solution {}".format(cost))
                 print("\tUpper bound {}".format(minimal_cost))
             except Exception as excep:
-                print("Run with exception {}".format(excep))
-                result_iteration = float('inf')
+                result_iteration = str(excep)
                 cost_iteration = float('inf')
         results.append(result_iteration)
         costs_run.append(cost_iteration)

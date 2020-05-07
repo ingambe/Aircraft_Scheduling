@@ -1,3 +1,32 @@
+#script (python)
+
+import clingo
+import time
+import pandas as pd
+import datetime
+
+def main(prg):
+    def on_model(m):
+        nonlocal results
+        nonlocal start
+        if len(m.cost) > 0:
+            seconds = int(time.time() - start)
+            result_iteration = [str(seconds), sum(m.cost)]
+            results.append(result_iteration)
+
+    results = []
+    start = time.time()
+    prg.ground([("base", [])])
+    with prg.solve(on_model=on_model, async_=True) as handle:
+        handle.wait(3600)
+        handle.cancel()
+    df = pd.DataFrame(results, columns=['Time', 'Cost'])
+    now = datetime.datetime.now()
+    date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
+    df.to_csv("results/martin_simple_std/time_" + date_string + ".csv")
+#end.
+
+
 % auxiliary predicates for flights and maintenance
 
 #const weight_maintenance = 101.

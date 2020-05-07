@@ -248,7 +248,7 @@ def main(prg):
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    df.to_csv("results/martin_inc_" + date_string + ".csv")
+    df.to_csv("results/martin_inc/time_" + date_string + ".csv")
 #end.
 
 #program step(t).
