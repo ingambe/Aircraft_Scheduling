@@ -200,7 +200,7 @@ def main(prg):
         nonlocal results
         nonlocal start
         if len(m.cost) > 0:
-            seconds = time.time() - start
+            seconds = int(time.time() - start)
             result_iteration = [str(seconds), sum(m.cost)]
             results.append(result_iteration)
             if timer.is_alive():
