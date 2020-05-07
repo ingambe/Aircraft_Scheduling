@@ -185,6 +185,8 @@ import sys
 import threading
 import time
 import copy
+import datetime
+import pandas as pd
 
 def main(prg):
 
@@ -195,7 +197,12 @@ def main(prg):
         It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
         nonlocal local_best_solution
         nonlocal timer
+        nonlocal results
+        nonlocal start
         if len(m.cost) > 0:
+            seconds = time.time() - start
+            result_iteration = [str(seconds), sum(m.cost)]
+            results.append(result_iteration)
             if timer.is_alive():
                 timer.cancel()
                 timer.join()
@@ -213,6 +220,8 @@ def main(prg):
     all_time_best = [float('inf')]
     iteration_without_improvement = 0
     current_best_solution = float('inf')
+    results = []
+    start = time.time()
     while (not solution_found or iteration_without_improvement < 3) and iteration_between_two_new_atom > 0:
         timer = threading.Timer(60.0, prg.interrupt)
         #iteration_between_two_new_atom -= 1
@@ -248,6 +257,10 @@ def main(prg):
         if timer.is_alive():
             timer.cancel()
             timer.join()
+    df = pd.DataFrame(results, columns=['Time', 'Cost'])
+    now = datetime.datetime.now()
+    date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
+    df.to_csv("results/martin_inc_" + date_string + ".csv")
 #end.
 
 #program step(t).
