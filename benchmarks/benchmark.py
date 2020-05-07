@@ -105,7 +105,7 @@ def main():
                 print("\tDuration {} seconds".format(result_iteration[encoding]))
                 print("\tBest solution {}".format(cost))
                 print("\tUpper bound {}".format(minimal_cost))
-            except subprocess.TimeoutExpired:
+            except:
                 result_iteration = float('inf')
                 cost_iteration = float('inf')
         results.append(result_iteration)
