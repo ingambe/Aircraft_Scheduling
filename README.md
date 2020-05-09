@@ -52,25 +52,38 @@ The `--gannt` argument generate and display a gannt of the instances:
 ## Solve an instance
 
 The [main script](https://github.com/ingambe/Aircraft_Scheduling/blob/master/main.py) file at the root of the project allows to solve an instance and test that the outputed solution is legal.
+You can also see the gannt of your solution if you want it.
 
 ```bash
-usage: main.py [-h] [--instance INSTANCE] [--encoding ENCODING]
-               [--output_file OUTPUT_FILE] [-n N] [-q]
+usage: main.py [-h] [--input INPUT] [--instance INSTANCE]
+               [--output_file OUTPUT_FILE] [--gantt]
 
 Generate the solution and test it to ensure it is correct
 
 optional arguments:
   -h, --help            show this help message and exit
+  --input INPUT         the path to the input encoding
   --instance INSTANCE   the path to the instance
-  --encoding ENCODING   the path to the encoding
   --output_file OUTPUT_FILE
-                        the path to the ouput file
-  -n N                  number of solution to get (default = 1)
-  -q                    quiet mode, doesn't print the solution
+                        the path to the ouput solution file
+  --gantt               output the gannt of the solution
 ```
 
 The folder *encoding* folder contains every encoding you can use and test.
 The folder *instances* folder contains every instances to solve.
+
+Here is an example of the gannt of a solved instance:
+<p align="center"> 
+<img src="example_gannt_solved.png" alt="example of generated gannt of a big instance">
+</p>
+
+## Available encoding
+
+There is two main type of available encoding:
+- **One shot**: the "classical" approach which consist of ground + solve the instance.
+- **Multi Shot**: where we incrementally add new predicate to the solver.
+
+If you plain to use the multi shot formulation in your project, you may need to fine tune the hyperparameter of the solver such as the incremental step (which represent the added extra on-ground time in second at each iteration), the number of iteration without improvement before to stop and maximum allowed time to the solver in order to find a solution.
 
 ## Running the tests
 
