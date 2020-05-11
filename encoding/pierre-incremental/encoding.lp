@@ -1,4 +1,4 @@
-#const second_inc=600.
+#const second_inc=3600.
 
 #const weight_maintenance = 101.
 #const level_maintenance = 1.
