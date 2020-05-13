@@ -96,7 +96,7 @@ def main():
                     os.remove(answer_temp.name)
                     if not json_check["Result"] == "SATISFIABLE":
                         correct_solution = False
-                if correct_solution and len(answer) > 1:
+                if correct_solution:
                     result_iteration[encoding] = duration
                     cost_iteration[encoding] = cost
                 else:

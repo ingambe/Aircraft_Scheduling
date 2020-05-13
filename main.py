@@ -149,7 +149,7 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         first_flight_assigned[numbers[1] - 1] = flights[numbers[0] - 1]
-    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, 500, 5000, flights_created,
+    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, flights_created,
                         start_maint_count, limit_counter_dict, maintenance_length, airport_maintenance_int)
     answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
     answer_temp.write(repr(solution))
