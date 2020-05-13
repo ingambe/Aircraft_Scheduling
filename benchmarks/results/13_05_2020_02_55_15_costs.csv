@@ -1,0 +1,11 @@
+,upper_bound,martin-simple-inc,pierre-standard,martin-preprocessing-standard,martin-preprocessing-incremental,pierre-incremental,martin-simple-std
+0,7272,inf,16151,10954,inf,inf,12348
+1,5656,inf,9035,3232,inf,inf,3232
+2,5252,inf,6232,2727,inf,inf,2828
+3,5757,inf,8535,3232,inf,inf,3131
+4,5757,inf,8641,3636,3636.0,inf,4540
+5,4747,inf,6530,2525,inf,inf,2727
+6,5656,inf,10732,4131,inf,inf,3232
+7,5353,inf,10934,3333,inf,inf,3636
+8,5252,inf,8636,3535,inf,inf,4237
+9,5757,inf,10833,3131,inf,inf,2929
