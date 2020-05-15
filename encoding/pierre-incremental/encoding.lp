@@ -99,7 +99,7 @@ def main(prg):
         parts.append(("step", [i]))
         if i == 0:
             parts.append(("base", []))
-        #prg.cleanup()
+        prg.cleanup()
         prg.ground(parts)
         number_atom = 0
         for x in prg.symbolic_atoms.by_signature("compatible2", 3):
