@@ -65,7 +65,6 @@ def main():
                 duration = end - start
                 json_answers = json.loads(stdoutdata)
 
-                correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
                 cost = float('inf')
                 answer = []
                 # we need to check all solution and get the best one
@@ -79,6 +78,8 @@ def main():
                                 cost = current_cost
                         else:
                             cost = 0
+
+                correct_solution = len(answer) > 0
                 # if it's not an intermediate call (needed for incremental grouding)
                 if not args.no_check:
                     # we append "" just to get the last . when we join latter

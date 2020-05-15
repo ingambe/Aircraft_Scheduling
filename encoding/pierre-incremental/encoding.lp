@@ -6,10 +6,12 @@
 #const weight_tat = 500.
 #const level_tat = 2.
 
+compatible(F1, F2, T2 - T1 - TAT) :- end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, not first(F2, _).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%% FLIGHT ALLOCATION %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{route(F1, F2) : compatible(F1, F2, T)} 1 :- flight(F1).
-{route(F1, F2) : compatible(F1, F2, T)} 1 :- flight(F2).
+{route(F1, F2) : compatible2(F1, F2, T)} 1 :- flight(F1).
+{route(F1, F2) : compatible2(F1, F2, T)} 1 :- flight(F2).
 
 assign(F, A) :- first(F, A).
 assign(F2, A) :- assign(F1, A), aircraft(A), route(F1, F2), not first(F2, A).
@@ -19,7 +21,7 @@ assign(F2, A) :- assign(F1, A), aircraft(A), route(F1, F2), not first(F2, A).
 %%%%%%%%%%%%%%%%%%%%%%%%%%% MAINTENANCE %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 maintenance_compatible_flight(F, M) :- airport_maintenance(M, A), airport_end(F, A).
-maintenance_compatible_route(F1, F2, M) :- maintenance_compatible_flight(F1, M), compatible(F1, F2, T), length_maintenance(M, LM), T >= LM.
+maintenance_compatible_route(F1, F2, M) :- maintenance_compatible_flight(F1, M), compatible2(F1, F2, T), length_maintenance(M, LM), T >= LM.
 
 {maintenance_after_flight(F1, M)} :- maintenance_compatible_route(F1, F2, M).
 
@@ -34,7 +36,7 @@ maintenance_coverage(F2, M) :- assign(F1, A), assign(F2, A), end(F1, T1), end(F2
 cost(tat, weight_tat, level_tat).
 cost(maintenance, weight_maintenance, level_maintenance).
 
-:~ route(F1, F2), compatible(F1, F2, T), T < 0, cost(tat, C, L). [C@L, F1, tat]
+:~ route(F1, F2), compatible2(F1, F2, T), T < 0, cost(tat, C, L). [C@L, F1, tat]
 
 :~ maintenance_after_flight(F, M), cost(maintenance, C, L). [C@L, F, maintenance]
 
@@ -43,7 +45,7 @@ cost(maintenance, weight_maintenance, level_maintenance).
 #show assign/2.
 #show maintenance_after_flight/2.
 
-#external compatible(F1, F2, T2 - T1 - TAT) : end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2.
+#external compatible2(F1, F2, T) : compatible(F1, F2, T).
 
 #script (python)
 
@@ -97,10 +99,10 @@ def main(prg):
         parts.append(("step", [i]))
         if i == 0:
             parts.append(("base", []))
-        prg.cleanup()
+        #prg.cleanup()
         prg.ground(parts)
         number_atom = 0
-        for x in prg.symbolic_atoms.by_signature("compatible", 3):
+        for x in prg.symbolic_atoms.by_signature("compatible2", 3):
             if x.is_fact:
                 number_atom += 1
         # if we have new atoms, we reset the counter of new atoms before stopping
@@ -132,4 +134,4 @@ def main(prg):
 
 #program step(t).
 
-compatible(F1, F2, T - TAT) :- end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, not first(F2, _), T = T2 - T1, (t-1) * second_inc <= T, T < t * second_inc.
+compatible2(F1, F2, T - TAT) :- end(F1, T1), tat(F1, TAT), start(F2, T2), airport_end(F1, A1), airport_start(F2, A1), T1 < T2, not first(F2, _), T = T2 - T1, (t-1) * second_inc <= T, T < t * second_inc.

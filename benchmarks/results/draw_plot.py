@@ -14,7 +14,7 @@ for i, encoding in enumerate(encodings):
     color_encoding[encoding] = colors[i]
 
 
-for i in range(10):
+for i in range(20):
     for encoding in encodings:
         x = []
         y = []
