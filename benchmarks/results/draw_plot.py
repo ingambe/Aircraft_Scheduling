@@ -57,25 +57,3 @@ for result in running_time_result:
         plt.title("Running time for each encoding")
         plt.grid(True)
         plt.savefig("running_time_{}.png".format(result), transparent=False)
-
-    """
-    fig, axes = plt.subplots()
-
-    axes.violinplot(dataset=df)
-
-    axes.set_title('Day Ahead Market')
-    axes.yaxis.grid(True)
-    axes.set_xlabel('Encoding')
-    if "cost" in result:
-        axes.set_ylabel("Solution cost")
-        axes.legend()
-        plt.title("Cost solution found by each encoding")
-        plt.grid(True)
-        plt.savefig("solution_cost_{}.png".format(result), transparent=False)
-    else:
-        axes.set_ylabel("Running time (s)")
-        plt.legend()
-        plt.title("Running time for each encoding")
-        plt.grid(True)
-        plt.savefig("running_time_{}.png".format(result), transparent=False)
-    """

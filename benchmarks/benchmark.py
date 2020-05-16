@@ -78,31 +78,9 @@ def main():
                                 cost = current_cost
                         else:
                             cost = 0
-
-                correct_solution = len(answer) > 0
-                # if it's not an intermediate call (needed for incremental grouding)
-                if not args.no_check:
-                    # we append "" just to get the last . when we join latter
-                    answer = answer + [""]
-                    answer_str = ".".join(answer)
-                    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
-                    answer_temp.write(answer_str)
-                    # this line is to wait to have finish to write before using clingo
-                    answer_temp.flush()
-                    clingo_check = subprocess.Popen(["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
-                    clingo_check.wait()
-                    json_check = json.loads(stdoutdata_check)
-                    answer_temp.close()
-                    os.remove(answer_temp.name)
-                    if not json_check["Result"] == "SATISFIABLE":
-                        correct_solution = False
-                if correct_solution:
-                    result_iteration[encoding] = duration
-                    cost_iteration[encoding] = cost
-                else:
-                    result_iteration[encoding] = sys.maxsize
-                    cost_iteration[encoding] = float("inf")
+                            answer = answer_current["Value"]
+                result_iteration[encoding] = duration
+                cost_iteration[encoding] = cost
                 print("\tSatisfiable {}".format(correct_solution))
                 print("\tDuration {} seconds".format(result_iteration[encoding]))
                 print("\tBest solution {}".format(cost))
