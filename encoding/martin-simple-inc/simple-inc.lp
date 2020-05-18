@@ -127,9 +127,9 @@ forbid(T, G, P) :- mainduration(B, T, G, t),
 cost(tat, weight_tat, level_tat).
 cost(maintenance, weight_maintenance, level_maintenance).
 
-:~ route(F1, F2, G, t), tat(F1, D), G < D, cost(tat, C, L). [C@L, F1, tat]
+:~ route(F1, F2, G, t), tat(F1, D), G < D, cost(tat, C, L). [C * 10, F1, tat]
 
-:~ maintain(M, F, P), cost(maintenance, C, L). [C@L, F, maintenance]
+:~ maintain(M, F, P), cost(maintenance, C, L). [C, F, maintenance]
 
 % output flight assignment and maintenances
 

@@ -36,9 +36,9 @@ maintenance_coverage(F2, M) :- assign(F1, A), assign(F2, A), end(F1, T1), end(F2
 cost(tat, weight_tat, level_tat).
 cost(maintenance, weight_maintenance, level_maintenance).
 
-:~ route(F1, F2), compatible2(F1, F2, T), T < 0, cost(tat, C, L). [C@L, F1, tat]
+:~ route(F1, F2), compatible2(F1, F2, T), T < 0, cost(tat, C, L). [C * 10, F1, tat]
 
-:~ maintenance_after_flight(F, M), cost(maintenance, C, L). [C@L, F, maintenance]
+:~ maintenance_after_flight(F, M), cost(maintenance, C, L). [C, F, maintenance]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SHOW %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
