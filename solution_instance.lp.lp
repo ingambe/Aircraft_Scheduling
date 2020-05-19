@@ -1,1 +1,0 @@
-assign(1,1).assign(3,2).assign(5,3).assign(8,4).assign(12,5).assign(14,6).assign(15,7).assign(16,8).assign(18,9).assign(20,10).assign(19,9).assign(17,8).assign(13,5).assign(9,4).assign(6,3).assign(4,2).assign(2,1).assign(7,3).assign(10,4).assign(11,4).

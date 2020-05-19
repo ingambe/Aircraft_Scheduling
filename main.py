@@ -158,7 +158,7 @@ def gantt_solution(instance, solution):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate the solution and test it to ensure it is correct')
-    parser.add_argument('--input', type=str, help="the path to the input encoding")
+    parser.add_argument('--encoding', type=str, help="the path to the input encoding")
     parser.add_argument('--instance', type=str, help="the path to the instance")
     parser.add_argument('--output_file', type=str, help="the path to the ouput solution file")
     parser.add_argument('--gantt', action='store_true', help="output the gannt of the solution")
@@ -168,8 +168,8 @@ def main():
     if args.output_file is not None:
         output_file = args.output_file
     start = time.time()
-    if args.input is not None:
-        clingo = subprocess.Popen(["clingo"] + [instance] + [args.input] + ["--outf=2"],
+    if args.encoding is not None:
+        clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
         clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/pierre-incremental/encoding.lp'] + ["--outf=2"],
@@ -184,23 +184,27 @@ def main():
     # print("error: {}".format(stderrdata))
     # print(stdoutdata)
     json_answers = json.loads(stdoutdata)
-
+    # if we have found a solution
     correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
-    if correct_solution:
-        print("There is a solution, but is it a correct one ? Let's find out !")
-    else:
-        print("There is no solution")
     cost = float('inf')
     call = json_answers["Call"][-1]
     answer = call["Witnesses"][-1]
     # we need to check all solution and get the best one
     for call_current in json_answers["Call"]:
         if "Witnesses" in call_current:
+            # we have found a solution, we then will check if correct, this fix the issue when the solver output a solution
+            # but still says unkonwn
+            correct_solution = True
             answer_current = call_current["Witnesses"][-1]
             current_cost = answer_current["Costs"][0]
             if current_cost < cost:
                 answer = answer_current
                 cost = current_cost
+    if correct_solution:
+        print("There is a solution, but is it a correct one ? Let's find out !")
+    else:
+        print("There is no solution")
+        return
     # we append "" just to get the last . when we join latter
     answer = answer["Value"] + [""]
     answer_str = ".".join(answer)

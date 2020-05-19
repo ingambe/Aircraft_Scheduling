@@ -14,7 +14,7 @@ for i, encoding in enumerate(encodings):
     color_encoding[encoding] = colors[i]
 
 
-for i in range(20):
+for i in range(1):
     for encoding in encodings:
         x = []
         y = []
@@ -45,7 +45,7 @@ for result in running_time_result:
     df = df.dropna(axis=1)
     # we need also to remove the unnamed column
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-    sns.violinplot(data=df)
+    sns.violinplot(data=df, cut=0)
     plt.xlabel("Encoding")
     if "cost" in result:
         plt.ylabel("Solution Cost")
