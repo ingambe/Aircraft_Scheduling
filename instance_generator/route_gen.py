@@ -53,15 +53,14 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                        long=default_force,
                        long_ground_time=default_ground_force,
                        short=default_short,
-                       short_violation=default_short_violation):
+                       short_violation=default_short_violation,
+                       tat_cost=default_tat_cost,
+                       nb_airport_maintenance=default_nb_airport_maintenance,
+                       length_maintenance=default_length_maintenance):
     ''' This function generate a Solution model '''
-
-    tat_cost = 500
-
     # all the flight and maintenance created and allocated to an aircraft
     flights_and_maintenances = []
     flights = []
-
 
     if long:
         nb_aircraft += 1
@@ -94,11 +93,11 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
 
     # here we store the length of the maintenance
     LENGTH_SEC_MAINTENANCE = {}
-    LENGTH_SEC_MAINTENANCE["seven_day"] = 240 * 60 # 4hours
+    LENGTH_SEC_MAINTENANCE["seven_day"] = length_maintenance
 
     # here we store the airport of the maintenance
     AIRPORTS_MAINTENANCE = {}
-    AIRPORTS_MAINTENANCE["seven_day"] = [0, 1, 2]
+    AIRPORTS_MAINTENANCE["seven_day"] = np.random.randint(nb_airport, size=nb_airport_maintenance)
 
     upper_bound_solution_cost = 0
 

@@ -23,7 +23,10 @@ def main(prg):
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    df.to_csv("results/single/time_" + date_string + ".csv")
+    results_path = "results/single/"
+    if not os.path.exists(results_path):
+        os.mkdir(results_path)
+    df.to_csv(results_path + "time_" + date_string + ".csv")
 #end.
 
 

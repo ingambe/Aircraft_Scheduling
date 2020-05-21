@@ -138,6 +138,7 @@ cost(maintenance, weight_maintenance, level_maintenance).
 
 #script (python)
 
+import os
 import clingo
 import sys
 import threading
@@ -151,16 +152,24 @@ def main(prg):
     # we stop if we have two time in a row the same cost
     # for performance only, can be deactivated
     def handle_stop(m):
-        """ This function keep track of the global best solution and the current iteration best solution """
+        """ This function keep track of the global best solution and the current iteration best solution
+        It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
         nonlocal local_best_solution
+        nonlocal timer
         nonlocal results
         nonlocal start
         if len(m.cost) > 0:
             seconds = int(time.time() - start)
             result_iteration = [str(seconds), sum(m.cost)]
             results.append(result_iteration)
+            if timer.is_alive():
+                timer.cancel()
+                timer.join()
+            timer = threading.Timer(60.0, prg.interrupt)
             if sum(m.cost) < sum(local_best_solution):
                 local_best_solution = m.cost
+            if not timer.is_alive():
+                timer.start()
 
     i = 0
     ret = None
@@ -171,6 +180,7 @@ def main(prg):
     results = []
     start = time.time()
     while (not solution_found or iteration_without_improvement < 3):
+        timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
         parts.append(("step", [i]))
@@ -178,6 +188,7 @@ def main(prg):
             parts.append(("base", []))
         prg.cleanup()
         prg.ground(parts)
+        timer.start()
         ret = prg.solve(on_model=handle_stop)
         if sum(local_best_solution) < sum(all_time_best):
             all_time_best = local_best_solution
@@ -190,10 +201,16 @@ def main(prg):
         else:
             iteration_without_improvement += 1
         i += 1
+        if timer.is_alive():
+            timer.cancel()
+            timer.join()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    df.to_csv("results/incremental/time_" + date_string + ".csv")
+    results_path = "results/incremental/"
+    if not os.path.exists(results_path):
+        os.mkdir(results_path)
+    df.to_csv(results_path + "time_" + date_string + ".csv")
 #end.
 
 #program step(t).
