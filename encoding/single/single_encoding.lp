@@ -4,6 +4,7 @@ import clingo
 import time
 import pandas as pd
 import datetime
+import os
 
 def main(prg):
     def on_model(m):
