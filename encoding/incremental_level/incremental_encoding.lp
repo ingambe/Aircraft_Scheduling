@@ -207,7 +207,7 @@ def main(prg):
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/incremental/"
+    results_path = "results/incremental_level/"
     if not os.path.exists(results_path):
         os.mkdir(results_path)
     df.to_csv(results_path + "time_" + date_string + ".csv")
