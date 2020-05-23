@@ -59,7 +59,10 @@ def main():
             files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if isfile(join("../encoding/" + encoding, f))]
             start = time.time()
             try:
-                clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if encoding == 'parallel':
+                    clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"] + ['-t 8compete'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                else:
+                    clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (stdoutdata, stderrdata) = clingo.communicate(timeout=7200)
                 clingo.wait()
                 end = time.time()

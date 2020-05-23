@@ -127,9 +127,9 @@ forbid(T, G, P) :- mainduration(B, T, G, t),
 cost(tat, weight_tat, level_tat).
 cost(maintenance, weight_maintenance, level_maintenance).
 
-:~ route(F1, F2, G, t), tat(F1, D), G < D, cost(tat, C, L). [C, F1, tat]
+:~ route(F1, F2, G, t), tat(F1, D), G < D, cost(tat, C, L). [C@L, F1, tat]
 
-:~ maintain(M, F, P), cost(maintenance, C, L). [C, F, maintenance]
+:~ maintain(M, F, P), cost(maintenance, C, L). [C@L, F, maintenance]
 
 % output flight assignment and maintenances
 
@@ -207,7 +207,7 @@ def main(prg):
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/incremental_weight/"
+    results_path = "results/parallel/"
     if not os.path.exists(results_path):
         os.mkdir(results_path)
     df.to_csv(results_path + "time_" + date_string + ".csv")
