@@ -18,8 +18,8 @@ for i in range(20):
         x = []
         y = []
         dirFiles = os.listdir("{}/".format(encoding))
-        # we remove hidden file like ".gitkeep"
-        dirFiles = [f for f in dirFiles if not f.startswith('.')]
+        # we remove hidden file like ".gitkeep" and the "cost_iteration_"
+        dirFiles = [f for f in dirFiles if not f.startswith('.') and not f.startswith('cost_iteration_')]
         dirFiles.sort()
         data = pd.read_csv("{}/{}".format(encoding, dirFiles[i]))
         for row in data.itertuples():
@@ -34,6 +34,31 @@ for i in range(20):
     plt.savefig("plot_instance_{}.png".format(i), transparent=False)
     plt.clf()
 
+'''# this is used to plot the cost of the best solution at each iteration
+for i in range(20):
+    x = []
+    y = []
+    dirFiles = os.listdir("incremental/")
+    # we remove hidden file like ".gitkeep" and the "cost_iteration_"
+    dirFiles = [f for f in dirFiles if f.startswith('cost_iteration_')]
+    if len(dirFiles) > 0:
+        dirFiles.sort()
+        data = pd.read_csv("incremental/{}".format(dirFiles[i]))
+        for row in data.itertuples():
+            x.append(row.Iteration)
+            y.append(row.Cost)
+        marker_place = [i for i in range(len(x)) if i == 0 or y[i - 1] > y[i]]
+        plt.plot(x, y, linestyle='--', marker='o', color='b', markevery=marker_place, label="Instance {}".format(i))
+plt.xlabel("Iteration")
+plt.xlim(bottom=0)
+plt.ylabel("Solution Cost")
+plt.legend()
+plt.title("Best solution found at each iteration for the instance {}".format(i))
+plt.grid(True)
+plt.savefig("iteration_cost.png".format(i), transparent=False)
+plt.clf()
+
+'''
 # here we plot the violin plots
 running_time_result = [encoding for encoding in os.listdir('.') if encoding.endswith('.csv') and not os.path.isdir(encoding)]
 

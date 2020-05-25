@@ -162,6 +162,7 @@ def main():
     parser.add_argument('--instance', type=str, help="the path to the instance")
     parser.add_argument('--output_file', type=str, help="the path to the ouput solution file")
     parser.add_argument('--gantt', action='store_true', help="output the gannt of the solution")
+    parser.add_argument('--parallel', type=int, help="run in parallel ")
     args = parser.parse_args()
     instance = args.instance
     output_file = "solution_" + instance.split("/")[-1] + ".lp"
@@ -169,10 +170,14 @@ def main():
         output_file = args.output_file
     start = time.time()
     if args.encoding is not None:
-        clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
+        if args.parallel is not None:
+            clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"] + ["-t {}compete".format(int(args.parallel))],
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
-        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/pierre-incremental_level/encoding.lp'] + ["--outf=2"],
+        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental/incremental_encoding.lp'] + ["--outf=2"] + ["-t 8compete"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
     #                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)

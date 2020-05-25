@@ -192,28 +192,27 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 #print("usage aircraft {}".format(usage_aircraft))
                 # we start putting maintenance after 70% usage
                 # but anyway if usage reach 90%, we put it
-                if usage_aircraft > 0.5:
-                    probability_add_maintenance = usage_aircraft + (random.random() * 0.5)
-                    if probability_add_maintenance >= 1.0 or usage_aircraft > 0.9:
-                        # we get an airport to perform the maintenance and we modify the end airport of the previous
-                        # flight we need to ensure that the start and end airport of the previous start doesn't end
-                        # up being the same
-                        all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
-                                                     x != previous.start_airport]
-                        airport_maintenance = random.choice(all_airports_except_start)
-                        previous_flight = flights[-1]
-                        previous_flight.end_airport = airport_maintenance
-                        previous.end_airport = airport_maintenance
-                        flight_id = len(flights) + 1
-                        length_maintenance = LENGTH_SEC_MAINTENANCE["seven_day"]
-                        maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
-                                                         airport_maintenance, aircraft)
-                        flights_and_maintenances.append(maintenance)
-                        current_second_last_maintenance["seven_day"] = 0
-                        # we don't count the maintenance in the flights counter
-                        i -= 1
-                        upper_bound_solution_cost += 101
-
+                assert usage_aircraft <= 1.0
+                probability_add_maintenance = usage_aircraft + (random.random() * 0.5)
+                if usage_aircraft > 0.5 and probability_add_maintenance >= 1.0 or usage_aircraft > 0.9:
+                    # we get an airport to perform the maintenance and we modify the end airport of the previous
+                    # flight we need to ensure that the start and end airport of the previous start doesn't end
+                    # up being the same
+                    all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
+                                                 x != previous.start_airport]
+                    airport_maintenance = random.choice(all_airports_except_start)
+                    previous_flight = flights[-1]
+                    previous_flight.end_airport = airport_maintenance
+                    previous.end_airport = airport_maintenance
+                    flight_id = len(flights) + 1
+                    length_maintenance = LENGTH_SEC_MAINTENANCE["seven_day"]
+                    maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
+                                                     airport_maintenance, aircraft)
+                    flights_and_maintenances.append(maintenance)
+                    current_second_last_maintenance["seven_day"] = 0
+                    # we don't count the maintenance in the flights counter
+                    i -= 1
+                    upper_bound_solution_cost += 101
                 else:
 
                     if long and not short and aircraft == nb_aircraft - 1:
@@ -498,13 +497,15 @@ def main():
 
 
 def gannt(solution):
+    assigned_air = [0 for i in range(solution.nb_aircraft)]
     df = []
     for flight in solution.flights:
         dict_flight = dict()
         dict_flight["Task"] = "Aircraft " + str(flight.assigned_aircraft)
+        assigned_air[flight.assigned_aircraft] += 1
         dict_flight["Start"] = datetime.datetime.fromtimestamp(flight.start_date)
         dict_flight["Finish"] = datetime.datetime.fromtimestamp(flight.end_date)
-        if isinstance(flight, models.Maintenance):
+        if isinstance(flight, models.Maintenance) or flight.start_airport == flight.end_airport:
             dict_flight["Resource"] = "Maintenance"
         else:
             dict_flight["Resource"] = str(flight.start_airport) + " - " + str(flight.end_airport)
