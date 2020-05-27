@@ -152,24 +152,16 @@ def main(prg):
     # we stop if we have two time in a row the same cost
     # for performance only, can be deactivated
     def handle_stop(m):
-        """ This function keep track of the global best solution and the current iteration best solution
-        It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
+        """ This function keep track of the global best solution and the current iteration best solution """
         nonlocal local_best_solution
-        nonlocal timer
         nonlocal results
         nonlocal start
         if len(m.cost) > 0:
             seconds = int(time.time() - start)
             result_iteration = [str(seconds), sum(m.cost)]
             results.append(result_iteration)
-            if timer.is_alive():
-                timer.cancel()
-                timer.join()
-            timer = threading.Timer(60.0, prg.interrupt)
             if sum(m.cost) < sum(local_best_solution):
                 local_best_solution = m.cost
-            if not timer.is_alive():
-                timer.start()
 
     def stop_everything():
         global stop
@@ -190,7 +182,6 @@ def main(prg):
     one_hour.start()
     stop = False
     while (not solution_found and not stop):
-        timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
         parts.append(("step", [i]))
@@ -198,7 +189,6 @@ def main(prg):
             parts.append(("base", []))
         prg.cleanup()
         prg.ground(parts)
-        timer.start()
         ret = prg.solve(on_model=handle_stop)
         if sum(local_best_solution) < sum(all_time_best):
             all_time_best = local_best_solution
@@ -213,9 +203,6 @@ def main(prg):
         if solution_found:
             iteration_solution.append([str(i), str(all_time_best)])
         i += 1
-        if timer.is_alive():
-            timer.cancel()
-            timer.join()
     one_hour.cancel()
     one_hour.join()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
