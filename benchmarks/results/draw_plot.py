@@ -34,11 +34,11 @@ for i in range(20):
     plt.savefig("plot_instance_{}.png".format(i), transparent=False)
     plt.clf()
 
-'''# this is used to plot the cost of the best solution at each iteration
+# this is used to plot the cost of the best solution at each iteration
 for i in range(20):
     x = []
     y = []
-    dirFiles = os.listdir("incremental/")
+    dirFiles = os.listdir("incremental_step/")
     # we remove hidden file like ".gitkeep" and the "cost_iteration_"
     dirFiles = [f for f in dirFiles if f.startswith('cost_iteration_')]
     if len(dirFiles) > 0:
@@ -58,7 +58,7 @@ plt.grid(True)
 plt.savefig("iteration_cost.png".format(i), transparent=False)
 plt.clf()
 
-'''
+
 # here we plot the violin plots
 running_time_result = [encoding for encoding in os.listdir('.') if encoding.endswith('.csv') and not os.path.isdir(encoding)]
 

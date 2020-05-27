@@ -179,6 +179,7 @@ def main(prg):
     current_best_solution = float('inf')
     results = []
     start = time.time()
+    iteration_solution = []
     while (not solution_found or iteration_without_improvement < 3):
         timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
@@ -200,6 +201,8 @@ def main(prg):
             iteration_without_improvement = 0
         else:
             iteration_without_improvement += 1
+        if solution_found:
+            iteration_solution.append([str(i), str(all_time_best)])
         i += 1
         if timer.is_alive():
             timer.cancel()
@@ -211,6 +214,14 @@ def main(prg):
     if not os.path.exists(results_path):
         os.mkdir(results_path)
     df.to_csv(results_path + "time_" + date_string + ".csv")
+    df = pd.DataFrame(results, columns=['Iteration', 'Cost'])
+    now = datetime.datetime.now()
+    date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
+    results_path = "results/incremental_step/"
+    if not os.path.exists(results_path):
+        os.mkdir(results_path)
+    df.to_csv(results_path + "cost_iteration_" + date_string + ".csv")
 #end.
 
 #program step(t).
+
