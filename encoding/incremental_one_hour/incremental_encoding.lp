@@ -171,6 +171,12 @@ def main(prg):
             if not timer.is_alive():
                 timer.start()
 
+    def stop_everything():
+        global stop
+        global prg
+        stop = True
+        prg.interrupt
+
     i = 0
     ret = None
     solution_found = False
@@ -180,7 +186,10 @@ def main(prg):
     results = []
     start = time.time()
     iteration_solution = []
-    while (not solution_found or iteration_without_improvement < 3):
+    one_hour = threading.Timer(3600.0, stop_everything)
+    one_hour.start()
+    stop = False
+    while (not solution_found and not stop):
         timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
@@ -207,19 +216,21 @@ def main(prg):
         if timer.is_alive():
             timer.cancel()
             timer.join()
+    one_hour.cancel()
+    one_hour.join()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/incremental/"
+    results_path = "results/incremental_one_hour/"
     if not os.path.exists(results_path):
-        os.mkdir(results_path)
+        os.makedirs(results_path)
     df.to_csv(results_path + "time_" + date_string + ".csv")
     df = pd.DataFrame(results, columns=['Iteration', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/incremental_step/"
+    results_path = "results/incremental_one_hour_step/"
     if not os.path.exists(results_path):
-        os.mkdir(results_path)
+        os.makedirs(results_path)
     df.to_csv(results_path + "cost_iteration_" + date_string + ".csv")
 #end.
 

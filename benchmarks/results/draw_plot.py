@@ -38,12 +38,12 @@ for i in range(20):
 for i in range(20):
     x = []
     y = []
-    dirFiles = os.listdir("incremental_step/")
+    dirFiles = os.listdir("incremental_one_hour_step/")
     # we remove hidden file like ".gitkeep" and the "cost_iteration_"
     dirFiles = [f for f in dirFiles if f.startswith('cost_iteration_')]
     if len(dirFiles) > 0:
         dirFiles.sort()
-        data = pd.read_csv("incremental/{}".format(dirFiles[i]))
+        data = pd.read_csv("incremental_one_hour/{}".format(dirFiles[i]))
         for row in data.itertuples():
             x.append(row.Iteration)
             y.append(row.Cost)

@@ -177,7 +177,7 @@ def main():
             clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
-        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental/incremental_encoding.lp'] + ["--outf=2"] + ["-t 8compete"],
+        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_one_hour/incremental_encoding.lp'] + ["--outf=2"] + ["-t 8compete"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
     #                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
