@@ -167,7 +167,7 @@ def main(prg):
         global stop
         global prg
         stop = True
-        prg.interrupt
+        prg.interrupt()
 
     i = 0
     ret = None
@@ -201,7 +201,7 @@ def main(prg):
         else:
             iteration_without_improvement += 1
         if solution_found:
-            iteration_solution.append([str(i), str(all_time_best)])
+            iteration_solution.append([str(i), str(sum(all_time_best))])
         i += 1
     one_hour.cancel()
     one_hour.join()
@@ -212,7 +212,7 @@ def main(prg):
     if not os.path.exists(results_path):
         os.makedirs(results_path)
     df.to_csv(results_path + "time_" + date_string + ".csv")
-    df = pd.DataFrame(results, columns=['Iteration', 'Cost'])
+    df = pd.DataFrame(iteration_solution, columns=['Iteration', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
     results_path = "results/incremental_one_hour_step/"

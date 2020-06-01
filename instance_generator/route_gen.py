@@ -556,6 +556,7 @@ def gannt(solution):
                 mode="lines",
                 line=go.scatter.Line(color="black"),
                 showlegend=False))
+    fig.write_image("benchmark_gantt.svg")
     fig.show()
 
 
