@@ -10,7 +10,7 @@ from default_parameters import *
 default_solution, upper_bound = route_gen.instance_generator()
 
 def test_nb_ressources():
-    assert default_solution.nb_aircraft == default_nb_aircraft, "test failed, number of aicraft different has requested"
+    assert default_solution.nb_aircraft == default_nb_aircraft, "test failed, number of aircraft different has requested"
     assert default_solution.nb_airport == default_nb_airport, "test failed, number of airports different has requested"
 
 def test_flight_properties():
@@ -30,6 +30,9 @@ def test_coherence_solution():
     We multiply by 60 because default times are given in minutes and time in the instance are in seconds
     '''
     flight_of_aircrafts = default_solution.flight_of_aircraft
+    # unique airport and unique aircraft
+    unique_airport = set()
+    unique_aircraft = set()
     # for each flight of aircraft
     for aircraft in range(len(flight_of_aircrafts)):
         nb_flight_to_aircraft = 0
@@ -39,9 +42,17 @@ def test_coherence_solution():
         limite = default_solution.max_counters["seven_day"] * 60
         # we get all the flight expect the last one
         for i in range(0, len(flight_of_aircraft) - 1):
-            assert counter <= limite, "maintenance counter overdue"
+            assert counter <= limite, "test failed, maintenance counter overdue"
             current_flight = flight_of_aircraft[i]
             next_flight = flight_of_aircraft[i + 1]
+            # airports
+            unique_airport.add(current_flight.start_airport)
+            unique_airport.add(current_flight.end_airport)
+            unique_airport.add(next_flight.start_airport)
+            unique_airport.add(next_flight.end_airport)
+            # airports
+            unique_aircraft.add(current_flight.assigned_aircraft)
+            unique_aircraft.add(next_flight.assigned_aircraft)
             if current_flight.start_airport == current_flight.end_airport:
                 counter = 0
             else:
@@ -57,3 +68,5 @@ def test_coherence_solution():
                 counter += (next_flight.start_date - current_flight.end_date)
         assert nb_flight_to_aircraft <= default_max_flight_per_aicraft, "test failed, we exceed the maximum limit of flight per aircraft"
         assert nb_flight_to_aircraft >= default_min_flight_per_aicraft, "test failed, we are below the minimum limit of flight per aircraft"
+    assert len(unique_airport) <= default_nb_airport, "test failed, we have more airport than needed"
+    assert len(unique_aircraft) == default_nb_aircraft, "test failed, we have less aircraft than needed"

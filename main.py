@@ -160,8 +160,8 @@ def main():
     parser = argparse.ArgumentParser(description='Generate the solution and test it to ensure it is correct')
     parser.add_argument('--encoding', type=str, help="the path to the input encoding")
     parser.add_argument('--instance', type=str, help="the path to the instance")
-    parser.add_argument('--output_file', type=str, help="the path to the ouput solution file")
-    parser.add_argument('--gantt', action='store_true', help="output the gannt of the solution")
+    parser.add_argument('--output_file', type=str, help="the path to the output solution file")
+    parser.add_argument('--gantt', action='store_true', help="output the gantt of the solution")
     parser.add_argument('--parallel', type=int, help="run in parallel ")
     args = parser.parse_args()
     instance = args.instance
