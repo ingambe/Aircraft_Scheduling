@@ -1,0 +1,21 @@
+,0
+0,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmpywa0pflq.lp', '--outf=2']' timed out after 7200 seconds"
+1,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmpd3lmhls8.lp', '--outf=2']' timed out after 7200 seconds"
+2,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmp7qw1ipum.lp', '--outf=2']' timed out after 7200 seconds"
+3,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmp1_db1ygo.lp', '--outf=2']' timed out after 7200 seconds"
+4,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmpqdg4j77w.lp', '--outf=2']' timed out after 7200 seconds"
+5,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmppxc1b8zg.lp', '--outf=2']' timed out after 7200 seconds"
+6,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmpfk_n35vp.lp', '--outf=2']' timed out after 7200 seconds"
+7,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmpe82gjw__.lp', '--outf=2']' timed out after 7200 seconds"
+8,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmp2x40qx07.lp', '--outf=2']' timed out after 7200 seconds"
+9,"Command '['clingo', '../encoding/incremental_one_hour/incremental_encoding.lp', 'tmpvkhe79fi.lp', '--outf=2']' timed out after 7200 seconds"
+10,[Errno 12] Cannot allocate memory
+11,[Errno 12] Cannot allocate memory
+12,[Errno 12] Cannot allocate memory
+13,[Errno 12] Cannot allocate memory
+14,[Errno 12] Cannot allocate memory
+15,[Errno 12] Cannot allocate memory
+16,[Errno 12] Cannot allocate memory
+17,[Errno 12] Cannot allocate memory
+18,[Errno 12] Cannot allocate memory
+19,[Errno 12] Cannot allocate memory
