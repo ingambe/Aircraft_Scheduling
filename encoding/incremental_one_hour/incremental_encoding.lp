@@ -154,18 +154,24 @@ def main(prg):
     def handle_stop(m):
         """ This function keep track of the global best solution and the current iteration best solution """
         nonlocal local_best_solution
+        nonlocal timer
         nonlocal results
         nonlocal start
         if len(m.cost) > 0:
             seconds = int(time.time() - start)
             result_iteration = [str(seconds), sum(m.cost)]
             results.append(result_iteration)
+            if timer.is_alive():
+                timer.cancel()
+                timer.join()
+            timer = threading.Timer(60.0, prg.interrupt)
             if sum(m.cost) < sum(local_best_solution):
                 local_best_solution = m.cost
+            if not timer.is_alive():
+                timer.start()
 
     def stop_everything():
         global stop
-        global prg
         stop = True
         prg.interrupt()
 
@@ -181,7 +187,8 @@ def main(prg):
     one_hour = threading.Timer(3600.0, stop_everything)
     one_hour.start()
     stop = False
-    while (not solution_found and not stop):
+    while not stop:
+        timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
         parts.append(("step", [i]))
@@ -189,10 +196,10 @@ def main(prg):
             parts.append(("base", []))
         prg.cleanup()
         prg.ground(parts)
+        timer.start()
         ret = prg.solve(on_model=handle_stop)
         if sum(local_best_solution) < sum(all_time_best):
             all_time_best = local_best_solution
-            solution_found = True
             if len(all_time_best) > 1:
                 prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
             else:
@@ -200,9 +207,11 @@ def main(prg):
             iteration_without_improvement = 0
         else:
             iteration_without_improvement += 1
-        if solution_found:
-            iteration_solution.append([str(i), str(sum(all_time_best))])
+        iteration_solution.append([str(i), str(sum(all_time_best))])
         i += 1
+        if timer.is_alive():
+            timer.cancel()
+            timer.join()
     one_hour.cancel()
     one_hour.join()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])

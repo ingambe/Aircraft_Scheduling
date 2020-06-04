@@ -19,7 +19,7 @@ def main(prg):
     start = time.time()
     prg.ground([("base", [])])
     with prg.solve(on_model=on_model, async_=True) as handle:
-        handle.wait(3600)
+        handle.wait(60)
         handle.cancel()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
