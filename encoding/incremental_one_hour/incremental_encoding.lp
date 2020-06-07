@@ -157,6 +157,7 @@ def main(prg):
         nonlocal timer
         nonlocal results
         nonlocal start
+        nonlocal timeout_start
         if len(m.cost) > 0:
             seconds = int(time.time() - start)
             result_iteration = [str(seconds), sum(m.cost)]
@@ -167,11 +168,12 @@ def main(prg):
             timer = threading.Timer(60.0, prg.interrupt)
             if sum(m.cost) < sum(local_best_solution):
                 local_best_solution = m.cost
-            if not timer.is_alive():
+            if not timer.is_alive() and time.time() < timeout_start + 3600:
                 timer.start()
 
     def stop_everything():
         global stop
+        print("Test here")
         stop = True
         prg.interrupt()
 
@@ -184,10 +186,9 @@ def main(prg):
     results = []
     start = time.time()
     iteration_solution = []
-    one_hour = threading.Timer(3600.0, stop_everything)
-    one_hour.start()
+    timeout_start = time.time()
     stop = False
-    while not stop:
+    while time.time() < timeout_start + 3600:
         timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
@@ -212,9 +213,6 @@ def main(prg):
         if timer.is_alive():
             timer.cancel()
             timer.join()
-    if one_hour.is_alive():
-        one_hour.cancel()
-        one_hour.join()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
