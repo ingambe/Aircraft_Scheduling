@@ -212,8 +212,9 @@ def main(prg):
         if timer.is_alive():
             timer.cancel()
             timer.join()
-    one_hour.cancel()
-    one_hour.join()
+    if one_hour.is_alive():
+        one_hour.cancel()
+        one_hour.join()
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
