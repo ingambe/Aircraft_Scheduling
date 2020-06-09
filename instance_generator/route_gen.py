@@ -498,8 +498,6 @@ def main():
 
 def gannt(solution):
     assigned_air = [0 for i in range(solution.nb_aircraft)]
-    maintenance = 0
-    all_flights = []
     df = []
     for flight in solution.flights:
         dict_flight = dict()
@@ -509,16 +507,14 @@ def gannt(solution):
         dict_flight["Finish"] = datetime.datetime.fromtimestamp(flight.end_date)
         if isinstance(flight, models.Maintenance) or flight.start_airport == flight.end_airport:
             dict_flight["Resource"] = "Maintenance"
-            maintenance = 1
         else:
             dict_flight["Resource"] = str(flight.start_airport) + " - " + str(flight.end_airport)
-            all_flights.append((flight.start_airport, flight.end_airport))
         dict_flight["Complete"] = flight.tat
         df.append(dict_flight)
 
     # we create a color for each flight + 1 for the maintenance
     colors = [
-        tuple([random.random() for i in range(3)]) for i in range(len(list(enumerate(all_flights))) + maintenance)
+        tuple([random.random() for i in range(3)]) for i in range(len(solution.unique_flights) + 1)
     ]
     fig = ff.create_gantt(df, colors=colors, index_col='Resource', group_tasks=True)
     # we need to create label for displaying the start and end airport
@@ -556,7 +552,6 @@ def gannt(solution):
                 mode="lines",
                 line=go.scatter.Line(color="black"),
                 showlegend=False))
-    fig.write_image("benchmark_gantt.svg")
     fig.show()
 
 

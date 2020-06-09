@@ -152,12 +152,12 @@ def main(prg):
     # we stop if we have two time in a row the same cost
     # for performance only, can be deactivated
     def handle_stop(m):
-        """ This function keep track of the global best solution and the current iteration best solution """
+        """ This function keep track of the global best solution and the current iteration best solution
+        It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
         nonlocal local_best_solution
         nonlocal timer
         nonlocal results
         nonlocal start
-        nonlocal timeout_start
         if len(m.cost) > 0:
             seconds = int(time.time() - start)
             result_iteration = [str(seconds), sum(m.cost)]
@@ -168,8 +168,9 @@ def main(prg):
             timer = threading.Timer(60.0, prg.interrupt)
             if sum(m.cost) < sum(local_best_solution):
                 local_best_solution = m.cost
-            if not timer.is_alive() and time.time() < timeout_start + 3600:
+            if not timer.is_alive():
                 timer.start()
+
     i = 0
     ret = None
     solution_found = False
@@ -178,10 +179,7 @@ def main(prg):
     current_best_solution = float('inf')
     results = []
     start = time.time()
-    iteration_solution = []
-    timeout_start = time.time()
-    stop = False
-    while time.time() < timeout_start + 3600:
+    while (not solution_found or iteration_without_improvement < 3):
         timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
@@ -194,6 +192,7 @@ def main(prg):
         ret = prg.solve(on_model=handle_stop)
         if sum(local_best_solution) < sum(all_time_best):
             all_time_best = local_best_solution
+            solution_found = True
             if len(all_time_best) > 1:
                 prg.configuration.solve.opt_mode = "opt,{},{}".format(all_time_best[0], all_time_best[1])
             else:
@@ -201,7 +200,6 @@ def main(prg):
             iteration_without_improvement = 0
         else:
             iteration_without_improvement += 1
-        iteration_solution.append([str(i), str(sum(all_time_best))])
         i += 1
         if timer.is_alive():
             timer.cancel()
@@ -209,18 +207,10 @@ def main(prg):
     df = pd.DataFrame(results, columns=['Time', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/incremental_one_hour/"
+    results_path = "results/incremental/"
     if not os.path.exists(results_path):
-        os.makedirs(results_path)
+        os.mkdir(results_path)
     df.to_csv(results_path + "time_" + date_string + ".csv")
-    df = pd.DataFrame(iteration_solution, columns=['Iteration', 'Cost'])
-    now = datetime.datetime.now()
-    date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/incremental_one_hour_step/"
-    if not os.path.exists(results_path):
-        os.makedirs(results_path)
-    df.to_csv(results_path + "cost_iteration_" + date_string + ".csv")
 #end.
 
 #program step(t).
-
