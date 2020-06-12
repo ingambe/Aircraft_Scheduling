@@ -21,11 +21,12 @@ for i in range(20):
         # we remove hidden file like ".gitkeep" and the "cost_iteration_"
         dirFiles = [f for f in dirFiles if not f.startswith('.') and not f.startswith('cost_iteration_')]
         dirFiles.sort()
-        data = pd.read_csv("{}/{}".format(encoding, dirFiles[i]))
-        for row in data.itertuples():
-            x.append(row.Time)
-            y.append(row.Cost)
-        plt.plot(x, y, label="{}".format(encoding), c=color_encoding[encoding])
+        if len(dirFiles) > 0:
+            data = pd.read_csv("{}/{}".format(encoding, dirFiles[i]))
+            for row in data.itertuples():
+                x.append(row.Time)
+                y.append(row.Cost)
+            plt.plot(x, y, label="{}".format(encoding), c=color_encoding[encoding])
     plt.xlabel("Time (s)")
     plt.ylabel("Solution Cost")
     plt.legend()
@@ -40,23 +41,23 @@ for i in range(20):
     y = []
     dirFiles = os.listdir("incremental_one_hour_step/")
     # we remove hidden file like ".gitkeep" and the "cost_iteration_"
-    dirFiles = [f for f in dirFiles if f.startswith('cost_iteration_')]
+    dirFiles = [f for f in dirFiles if f.startswith('cost')]
     if len(dirFiles) > 0:
         dirFiles.sort()
-        data = pd.read_csv("incremental_one_hour/{}".format(dirFiles[i]))
+        data = pd.read_csv("incremental_one_hour_step/{}".format(dirFiles[i]))
         for row in data.itertuples():
             x.append(row.Iteration)
             y.append(row.Cost)
         marker_place = [i for i in range(len(x)) if i == 0 or y[i - 1] > y[i]]
         plt.plot(x, y, linestyle='--', marker='o', color='b', markevery=marker_place, label="Instance {}".format(i))
-plt.xlabel("Iteration")
-plt.xlim(bottom=0)
-plt.ylabel("Solution Cost")
-plt.legend()
-plt.title("Best solution found at each iteration for the instance {}".format(i))
-plt.grid(True)
-plt.savefig("iteration_cost.png".format(i), transparent=False)
-plt.clf()
+    plt.xlabel("Iteration")
+    #plt.xlim(bottom=0)
+    plt.ylabel("Solution Cost")
+    plt.legend()
+    plt.title("Best solution found at each iteration for the instance {}".format(i))
+    plt.grid(True)
+    plt.savefig("iteration_cost_{}.png".format(i), transparent=False)
+    plt.clf()
 
 
 # here we plot the violin plots
