@@ -62,12 +62,6 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     flights_and_maintenances = []
     flights = []
 
-    if long:
-        nb_aircraft += 1
-
-    if short:
-        nb_aircraft += 1
-
     # represent all unique flight created (i.e. starting from airport A to airport B)
     flights_created = dict()
 
