@@ -93,22 +93,19 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     AIRPORTS_MAINTENANCE = {}
     AIRPORTS_MAINTENANCE["seven_day"] = np.random.randint(nb_airport, size=nb_airport_maintenance)
 
-    upper_bound_solution_cost = 0
-
-    special_airport_long_short = list()
-
+    # we add the special airport to the maintenance compatible list
+    # we ensure the long aircraft is not overdue from the beginning
+    special_airports = list()
     if long and short:
-        special_airport_long_short.append(nb_airport)
-        special_airport_long_short.append(nb_airport + 1)
-        special_airport_long_short.append(nb_airport + 2)
-        special_airport_long_short.append(nb_airport + 3)
-        AIRPORTS_MAINTENANCE["seven_day"] = np.append(AIRPORTS_MAINTENANCE["seven_day"], special_airport_long_short)
-        # we have added two airports for the two special long airport
-        nb_airport += 2
+        special_airports = [nb_airport, nb_airport + 1, nb_airport + 2, nb_airport + 3]
+        second_initial_counter['seven_day'][nb_aircraft - 2] = 0
     elif long or short:
-        special_airport_long_short.append(nb_airport)
-        special_airport_long_short.append(nb_airport + 1)
-        AIRPORTS_MAINTENANCE["seven_day"] = np.append(AIRPORTS_MAINTENANCE["seven_day"], special_airport_long_short)
+        special_airports = [nb_airport, nb_airport + 1]
+        if long:
+            second_initial_counter['seven_day'][nb_aircraft - 1] = 0
+    AIRPORTS_MAINTENANCE["seven_day"] = np.append(AIRPORTS_MAINTENANCE["seven_day"], special_airports)
+
+    upper_bound_solution_cost = 0
 
     for aircraft in range(nb_aircraft):
         flights_per_aircraft[aircraft] = truncated_norm(
@@ -175,8 +172,8 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     if verbose:
                         print("First flight of aircraft {}, is {} - {}".format(
                             i, start_airport, end_airport))
-                    # multiply by 60 to convert from minute to second (epoch is in second) this allow to have a 
-                    # normal distribution between the flight end a time now and the flight start at time now 
+                    # multiply by 60 to convert from minute to second (epoch is in second) this allow to have a
+                    # normal distribution between the flight end a time now and the flight start at time now
                     start_date = truncated_norm(time_now - length_fly,
                                                 time_now + length_fly,
                                                 time_now, time_now / 4)
@@ -203,34 +200,22 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                 # but anyway if usage reach 90%, we put it
                 assert usage_aircraft <= 1.0
                 probability_add_maintenance = usage_aircraft + (random.random() * 0.5)
+                if long:
+                    if short and aircraft == nb_aircraft - 2:
+                        probability_add_maintenance = usage_aircraft > 0.5
+                    elif aircraft == nb_aircraft - 1:
+                        probability_add_maintenance = usage_aircraft > 0.5
                 if usage_aircraft > 0.5 and probability_add_maintenance >= 1.0 or usage_aircraft > 0.9:
                     # we get an airport to perform the maintenance and we modify the end airport of the previous
                     # flight we need to ensure that the start and end airport of the previous start doesn't end
                     # up being the same
-                    forbiden_airport = list()
-                    forbiden_airport.append(previous.start_airport)
-                    if (long or short) and (aircraft == nb_aircraft - 1 or aircraft == nb_aircraft - 2):
-                        if previous.start_airport == nb_airport:
-                            airport_maintenance = nb_airport + 1
-                        elif previous.start_airport == nb_airport + 1:
-                            airport_maintenance = nb_airport
-                        elif previous.start_airport == nb_airport + 2:
-                            airport_maintenance = nb_airport + 3
-                        elif previous.start_airport == nb_airport + 3:
-                            airport_maintenance = nb_airport + 2
-                        else:
-                            forbiden_airport.extend(special_airport_long_short)
-                            all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
-                                                         x not in forbiden_airport]
-                            airport_maintenance = random.choice(all_airports_except_start)
-                    else:
-                        forbiden_airport.extend(special_airport_long_short)
+                    if previous.end_airport not in AIRPORTS_MAINTENANCE["seven_day"]:
                         all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
-                                                     x not in forbiden_airport]
+                                                     x != previous.start_airport]
                         airport_maintenance = random.choice(all_airports_except_start)
-                    previous_flight = flights[-1]
-                    previous_flight.end_airport = airport_maintenance
-                    previous.end_airport = airport_maintenance
+                        previous_flight = flights[-1]
+                        previous_flight.end_airport = airport_maintenance
+                        previous.end_airport = airport_maintenance
                     flight_id = len(flights) + 1
                     length_maintenance = LENGTH_SEC_MAINTENANCE["seven_day"]
                     maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
@@ -241,7 +226,6 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     i -= 1
                     upper_bound_solution_cost += 101
                 else:
-
                     if long and not short and aircraft == nb_aircraft - 1:
                         if start_airport == nb_airport:
                             end_airport = nb_airport + 1
@@ -293,8 +277,6 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                         length_fly = previously_created.length_fly
                         tat = previously_created.tat
 
-
-
                     # we start the index at 1
                     flight_id = len(flights) + 1
                     flight_object = models.Flight(flight_id, start_date, length_fly,
@@ -311,6 +293,7 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
 
     solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft
                                , flights_created, second_initial_counter, limit_second_last_maintenance, LENGTH_SEC_MAINTENANCE, AIRPORTS_MAINTENANCE)
+
     if long:
         # we have added two airports for the two special long airport
         nb_airport += 2
@@ -526,6 +509,9 @@ def main():
 def gannt(solution):
     assigned_air = [0 for i in range(solution.nb_aircraft)]
     df = []
+    maintenance_in_solution = False
+
+    unique_flight = dict()
     for flight in solution.flights:
         dict_flight = dict()
         dict_flight["Task"] = "Aircraft " + str(flight.assigned_aircraft)
@@ -534,14 +520,16 @@ def gannt(solution):
         dict_flight["Finish"] = datetime.datetime.fromtimestamp(flight.end_date)
         if isinstance(flight, models.Maintenance) or flight.start_airport == flight.end_airport:
             dict_flight["Resource"] = "Maintenance"
+            maintenance_in_solution = True
         else:
             dict_flight["Resource"] = str(flight.start_airport) + " - " + str(flight.end_airport)
+            unique_flight[str(flight.start_airport) + " - " + str(flight.end_airport)] = 1
         dict_flight["Complete"] = flight.tat
         df.append(dict_flight)
 
     # we create a color for each flight + 1 for the maintenance
     colors = [
-        tuple([random.random() for i in range(3)]) for i in range(len(solution.unique_flights) + 1)
+        tuple([random.random() for i in range(3)]) for i in range(len(unique_flight) + int(maintenance_in_solution))
     ]
     fig = ff.create_gantt(df, colors=colors, index_col='Resource', group_tasks=True)
     # we need to create label for displaying the start and end airport
