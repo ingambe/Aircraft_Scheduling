@@ -162,10 +162,10 @@ def main():
     parser.add_argument('--instance', type=str, help="the path to the instance")
     parser.add_argument('--output_file', type=str, help="the path to the output solution file")
     parser.add_argument('--gantt', action='store_true', help="output the gantt of the solution")
-    parser.add_argument('--parallel', type=int, help="run in parallel ")
+    parser.add_argument('--parallel', type=int, help="run in parallel on a given number of cores")
     args = parser.parse_args()
     instance = args.instance
-    output_file = "solution_" + instance.split("/")[-1] + ".lp"
+    output_file = "solution_" + instance.split("/")[-1]
     if args.output_file is not None:
         output_file = args.output_file
     start = time.time()
@@ -193,7 +193,7 @@ def main():
     correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
     cost = float('inf')
     call = json_answers["Call"][-1]
-    answer = call["Witnesses"][-1]
+    #answer = call["Witnesses"][-1]
     # we need to check all solution and get the best one
     for call_current in json_answers["Call"]:
         if "Witnesses" in call_current:

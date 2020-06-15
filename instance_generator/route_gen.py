@@ -95,6 +95,21 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
 
     upper_bound_solution_cost = 0
 
+    special_airport_long_short = list()
+
+    if long and short:
+        special_airport_long_short.append(nb_airport)
+        special_airport_long_short.append(nb_airport + 1)
+        special_airport_long_short.append(nb_airport + 2)
+        special_airport_long_short.append(nb_airport + 3)
+        AIRPORTS_MAINTENANCE["seven_day"] = np.append(AIRPORTS_MAINTENANCE["seven_day"], special_airport_long_short)
+        # we have added two airports for the two special long airport
+        nb_airport += 2
+    elif long or short:
+        special_airport_long_short.append(nb_airport)
+        special_airport_long_short.append(nb_airport + 1)
+        AIRPORTS_MAINTENANCE["seven_day"] = np.append(AIRPORTS_MAINTENANCE["seven_day"], special_airport_long_short)
+
     for aircraft in range(nb_aircraft):
         flights_per_aircraft[aircraft] = truncated_norm(
             min_flight_per_aicraft, max_flight_per_aicraft,
@@ -192,9 +207,27 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     # we get an airport to perform the maintenance and we modify the end airport of the previous
                     # flight we need to ensure that the start and end airport of the previous start doesn't end
                     # up being the same
-                    all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
-                                                 x != previous.start_airport]
-                    airport_maintenance = random.choice(all_airports_except_start)
+                    forbiden_airport = list()
+                    forbiden_airport.append(previous.start_airport)
+                    if (long or short) and (aircraft == nb_aircraft - 1 or aircraft == nb_aircraft - 2):
+                        if previous.start_airport == nb_airport:
+                            airport_maintenance = nb_airport + 1
+                        elif previous.start_airport == nb_airport + 1:
+                            airport_maintenance = nb_airport
+                        elif previous.start_airport == nb_airport + 2:
+                            airport_maintenance = nb_airport + 3
+                        elif previous.start_airport == nb_airport + 3:
+                            airport_maintenance = nb_airport + 2
+                        else:
+                            forbiden_airport.extend(special_airport_long_short)
+                            all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
+                                                         x not in forbiden_airport]
+                            airport_maintenance = random.choice(all_airports_except_start)
+                    else:
+                        forbiden_airport.extend(special_airport_long_short)
+                        all_airports_except_start = [x for x in AIRPORTS_MAINTENANCE["seven_day"] if
+                                                     x not in forbiden_airport]
+                        airport_maintenance = random.choice(all_airports_except_start)
                     previous_flight = flights[-1]
                     previous_flight.end_airport = airport_maintenance
                     previous.end_airport = airport_maintenance
