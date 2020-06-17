@@ -158,11 +158,11 @@ def gantt_solution(instance, solution):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate the solution and test it to ensure it is correct')
-    parser.add_argument('--encoding', type=str, help="the path to the input encoding")
-    parser.add_argument('--instance', type=str, help="the path to the instance")
+    parser.add_argument('--encoding', type=str, help="the path to the encoding you want to use to solve the instance")
+    parser.add_argument('--instance', type=str, help="the path to the instance to solve ")
     parser.add_argument('--output_file', type=str, help="the path to the output solution file")
     parser.add_argument('--gantt', action='store_true', help="output the gantt of the solution")
-    parser.add_argument('--parallel', type=int, help="run in parallel on a given number of cores")
+    parser.add_argument('--parallel', type=int, help="run the search in parallel on a given number of cores")
     args = parser.parse_args()
     instance = args.instance
     output_file = "solution_" + instance.split("/")[-1]

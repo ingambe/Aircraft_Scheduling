@@ -295,9 +295,9 @@ def main():
         help="This generate instances with default value for the previously listed arguments"
     )
 
-    parser.add_argument('--gannt',
+    parser.add_argument('--gantt',
                         action='store_true',
-                        help="This will output the gannt")
+                        help="This will output the gantt")
 
     parser.add_argument(
         '--verbose',
@@ -406,7 +406,7 @@ def main():
             mean_on_ground, var_on_ground, min_on_ground, max_on_ground,
             args.verbose)
 
-    if args.gannt:
+    if args.gantt:
         gannt(solution)
 
     asp_input_fact(output_file, solution)
