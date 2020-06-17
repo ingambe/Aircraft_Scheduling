@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import pathlib
 import subprocess
 import json
 from os.path import isfile, join, basename
@@ -38,7 +37,7 @@ def main():
     args = parser.parse_args()
     number_of_run = args.runs
     print("Start of the benchmarks")
-    encodings = [x for x in os.listdir(str(pathlib.Path(__file__).parent.parent) + "/encoding/")]
+    encodings = [x for x in os.listdir("../encoding/")]
     print("Encodings to test:")
     for encoding in encodings:
         print("\t-{}".format(encoding))
@@ -57,7 +56,7 @@ def main():
         instance_temp.flush()
         for encoding in encodings:
             print("Encoding {}:".format(encoding))
-            files_encoding = [str(pathlib.Path(__file__).parent.parent) + "/encoding/" + encoding + "/" + f for f in os.listdir(str(pathlib.Path(__file__).parent.parent) + "/encoding/" + encoding) if isfile(join(str(pathlib.Path(__file__).parent.parent) + "/encoding/" + encoding, f))]
+            files_encoding = ["../encoding/" + encoding + "/" + f for f in os.listdir("../encoding/" + encoding) if isfile(join("../encoding/" + encoding, f))]
             start = time.time()
             try:
                 if 'parallel' == encoding:
@@ -92,7 +91,7 @@ def main():
                 # this line is to wait to have finish to write before using clingo
                 answer_temp.flush()
                 clingo_check = subprocess.Popen(
-                    ["clingo"] + [str(pathlib.Path(__file__).parent.parent) + "/test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [
+                    ["clingo"] + ["../test_solution/test_solution.lp"] + [basename(answer_temp.name)] + [
                         basename(instance_temp.name)] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE)
                 (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
@@ -122,10 +121,10 @@ def main():
     df = pd.DataFrame(results)
     now = datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    df.to_csv(str(pathlib.Path(__file__).parent) + "/results/" + date_string + ".csv")
+    df.to_csv("results/" + date_string + ".csv")
     # we also print the cost
     df = pd.DataFrame(costs_run)
-    df.to_csv(str(pathlib.Path(__file__).parent) +"/results/" + date_string + "_costs.csv")
+    df.to_csv("results/" + date_string + "_costs.csv")
 
 
 if __name__== "__main__":
