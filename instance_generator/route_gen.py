@@ -415,6 +415,8 @@ def main():
 def gannt(solution):
     assigned_air = [0 for i in range(solution.nb_aircraft)]
     df = []
+    # used to sort the flight by aircraft in the dataset, this allows to plot them correctly
+    assigned_flight_aircraft = [list() for i in range(solution.nb_aircraft)]
     for flight in solution.flights:
         dict_flight = dict()
         dict_flight["Task"] = "Aircraft " + str(flight.assigned_aircraft)
@@ -426,7 +428,11 @@ def gannt(solution):
         else:
             dict_flight["Resource"] = str(flight.start_airport) + " - " + str(flight.end_airport)
         dict_flight["Complete"] = flight.tat
-        df.append(dict_flight)
+        assigned_flight_aircraft[flight.assigned_aircraft].append(dict_flight)
+    
+    for aicraft in range(solution.nb_aircraft):
+        for flight in assigned_flight_aircraft[aicraft]:
+            df.append(flight)
 
     # we create a color for each flight + 1 for the maintenance
     colors = [

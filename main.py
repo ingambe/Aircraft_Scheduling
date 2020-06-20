@@ -177,7 +177,7 @@ def main():
             clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
-        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_one_hour/incremental_encoding.lp'] + ["--outf=2"] + ["-t 8compete"],
+        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/parallel/incremental_encoding.lp'] + ["--outf=2"] + ["-t 8compete"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
     #                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -201,7 +201,7 @@ def main():
             # but still says unkonwn
             correct_solution = True
             answer_current = call_current["Witnesses"][-1]
-            current_cost = answer_current["Costs"][0]
+            current_cost = sum(answer_current["Costs"])
             if current_cost < cost:
                 answer = answer_current
                 cost = current_cost
@@ -225,7 +225,7 @@ def main():
     json_check = json.loads(stdoutdata_check)
     print("Best solution cost {}".format(cost))
     answer_temp.close()
-    # os.remove(basename(answer_temp.name))
+    os.remove(basename(answer_temp.name))
 
     if not json_check["Result"] == "SATISFIABLE":
         correct_solution = False

@@ -109,6 +109,7 @@ The test coverage his far from optimal unfortunately, a contribution to this asp
 
 -  **Pierre Tassel**
 -  **Martin Gebser**
+-  **Mohamed Rbaia**
 
 ## License
 
