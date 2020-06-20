@@ -14,6 +14,7 @@ Which things you need to install the software and how to install them
 
 
 * [Python3](https://www.python.org/downloads/)
+* [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)          **Recommended** otherwise you will need to install Python enabled Clingo yourself (see https://github.com/potassco/clingo/releases/)
 * [Pip](https://pip.pypa.io/en/stable/installing/)          Already included in the latest python versions
 
 ### Installing
