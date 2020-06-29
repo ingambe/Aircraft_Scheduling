@@ -1,4 +1,4 @@
-# Aircraft Scheduling
+# Aircraft Scheduling [![Build Status](https://travis-ci.com/ingambe/Aircraft_Scheduling.svg?branch=master)](https://travis-ci.com/ingambe/Aircraft_Scheduling)
 
 This is a Proof of Concept for an ASP formulation of the Aircraft Scheduling problem.
 
