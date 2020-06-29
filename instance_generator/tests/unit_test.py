@@ -3,7 +3,9 @@
 import pytest
 
 import sys
-sys.path.append("..")
+import os
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 import route_gen
 from default_parameters import *
 
