@@ -17,7 +17,7 @@ from default_parameters import *
 
 
 def injective_airport(start, end):
-    ''' Injective function to map [0, nb_airport] -> [0, nb_airport]\start '''
+    ''' Injective function to map [0, nb_airport] -> [0, nb_airport] start '''
     if end < start:
         return end
     return end + 1
@@ -50,6 +50,10 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                        min_on_ground=default_min_on_ground,
                        max_on_ground=default_max_on_ground,
                        verbose=False,
+                       long=default_force,
+                       long_ground_time=default_ground_force,
+                       short=default_short,
+                       short_violation=default_short_violation,
                        tat_cost=default_tat_cost,
                        nb_airport_maintenance=default_nb_airport_maintenance,
                        length_maintenance=default_length_maintenance):
@@ -57,6 +61,12 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
     # all the flight and maintenance created and allocated to an aircraft
     flights_and_maintenances = []
     flights = []
+
+    if long:
+        nb_aircraft += 1
+
+    if short:
+        nb_aircraft += 1
 
     # represent all unique flight created (i.e. starting from airport A to airport B)
     flights_created = dict()
@@ -118,29 +128,67 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
             # for the first flight, the start airport is to be chosen between [0, nb_airport]
             # also, as we don't have previous flight, we need to determine a start date
             if first_flight:
-                start_airport = truncated_norm(1, nb_airport,
-                                                math.ceil(nb_airport / 2),
-                                                math.ceil(nb_airport / 4))
-                end_airport = injective_airport(
-                    start_airport,
-                    truncated_norm(1, nb_airport - 1,
-                                    math.ceil((nb_airport - 1) / 2),
-                                    math.ceil((nb_airport - 1) / 4)))
-                if verbose:
-                    print("First flight of aircraft {}, is {} - {}".format(
-                        i, start_airport, end_airport))
-                # multiply by 60 to convert from minute to second (epoch is in second) this allow to have a 
-                # normal distribution between the flight end a time now and the flight start at time now 
-                start_date = truncated_norm(time_now - length_fly,
-                                            time_now + length_fly,
-                                            time_now, time_now / 4)
+                if long and not short and aircraft == nb_aircraft - 1:
+                    start_airport = nb_airport
+                    end_airport = nb_airport + 1
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+                elif long and short and aircraft == nb_aircraft - 2:
+                    start_airport = nb_airport
+                    end_airport = nb_airport + 1
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+                elif short and not long and aircraft == nb_aircraft - 1:
+                    start_airport = nb_airport
+                    end_airport = nb_airport + 1
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+
+                elif short and long and aircraft == nb_aircraft - 1:
+                    start_airport = nb_airport + 2
+                    end_airport = nb_airport + 3
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+                else:
+
+                    start_airport = truncated_norm(1, nb_airport,
+                                                   math.ceil(nb_airport / 2),
+                                                   math.ceil(nb_airport / 4))
+                    end_airport = injective_airport(
+                        start_airport,
+                        truncated_norm(1, nb_airport - 1,
+                                       math.ceil((nb_airport - 1) / 2),
+                                       math.ceil((nb_airport - 1) / 4)))
+                    if verbose:
+                        print("First flight of aircraft {}, is {} - {}".format(
+                            i, start_airport, end_airport))
+                    # multiply by 60 to convert from minute to second (epoch is in second) this allow to have a 
+                    # normal distribution between the flight end a time now and the flight start at time now 
+                    start_date = truncated_norm(time_now - length_fly,
+                                                time_now + length_fly,
+                                                time_now, time_now / 4)
+
                 # we start the index at 1
                 flight_id = len(flights) + 1
                 flight_object = models.Flight(flight_id, start_date, length_fly,
                                                   start_airport, end_airport, aircraft,
                                                   tat)
-                if not (start_airport, end_airport) in flights_created:
-                    flights_created[(start_airport, end_airport)] = flight_object
+                key = str(flight_object.start_airport) + '-' + str(flight_object.end_airport)
+                if key not in flights_created:
+                    flights_created[key] = flight_object
+                else:
+                    if verbose:
+                        print(
+                            "The flight {} - {} has already been added to the database, we retrieve the info".format(
+                                start_airport, end_airport))
+                    unique_flight = flights_created[key]
+                    flight_object.length_fly = unique_flight.length_fly
+                    flight_object.tat = unique_flight.tat
+                    flight_object.end_date = flight_object.start_date + flight_object.length_fly
                 first_flight_aircraft[aircraft] = flight_object
                 flights.append(flight_object)
                 flights_and_maintenances.append(flight_object)
@@ -167,6 +215,30 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     previous_flight = flights[-1]
                     previous_flight.end_airport = airport_maintenance
                     previous.end_airport = airport_maintenance
+                    key = str(previous_flight.start_airport) + '-' + str(previous_flight.end_airport)
+                    if key not in flights_created:
+                        flights_created[key] = previous_flight
+                    else:
+                        if verbose:
+                            print(
+                                "The flight {} - {} has been modified and we need to retrieve the length".format(
+                                    start_airport, end_airport))
+                        unique_flight = flights_created[key]
+                        previous_flight.length_fly = unique_flight.length_fly
+                        previous_flight.tat = unique_flight.tat
+                        previous_flight.end_date = previous_flight.start_date + previous_flight.length_fly
+                    key = str(previous.start_airport) + '-' + str(previous.end_airport)
+                    if key not in flights_created:
+                        flights_created[key] = previous_flight
+                    else:
+                        if verbose:
+                            print(
+                                "The flight {} - {} has been modified and we need to retrieve the length".format(
+                                    start_airport, end_airport))
+                        unique_flight = flights_created[key]
+                        previous.length_fly = unique_flight.length_fly
+                        previous.tat = unique_flight.tat
+                        previous.end_date = previous.start_date + previous.length_fly
                     flight_id = len(flights) + 1
                     length_maintenance = LENGTH_SEC_MAINTENANCE["seven_day"]
                     maintenance = models.Maintenance(flight_id, previous.end_date, length_maintenance,
@@ -177,26 +249,47 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     i -= 1
                     upper_bound_solution_cost += 101
                 else:
-                    end_airport = injective_airport(
-                        start_airport,
-                        truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2,
-                                        (nb_airport - 1) / 4))
-                    minimal_legal_start = previous.end_date + previous.tat
-                    on_ground_time = truncated_norm(
-                        min_on_ground, max_on_ground, mean_on_ground,
-                        var_on_ground) * 60
-                    start_date = minimal_legal_start + on_ground_time
-                    # if we already got a flight starting from A to B, we get back the length of fly and TAT
-                    if (start_airport, end_airport) in flights_created:
-                        if verbose:
-                            print(
-                                "The flight {} - {} has already been added to the database, we "
-                                "retrieve the info".format(start_airport, end_airport))
-                        previously_created = flights_created[(start_airport,
-                                                              end_airport)]
-                        length_fly = previously_created.length_fly
-                        tat = previously_created.tat
 
+                    if long and not short and aircraft == nb_aircraft - 1:
+                        if start_airport == nb_airport:
+                            end_airport = nb_airport + 1
+                        else:
+                            end_airport = nb_airport
+                        minimal_legal_start = previous.end_date + previous.tat
+                        start_date = minimal_legal_start + long_ground_time * 60
+                    elif long and short and aircraft == nb_aircraft - 2:
+                        if start_airport == nb_airport:
+                            end_airport = nb_airport + 1
+                        else:
+                            end_airport = nb_airport
+                        minimal_legal_start = previous.end_date + previous.tat
+                        start_date = minimal_legal_start + long_ground_time * 60
+                    elif short and not long and aircraft == nb_aircraft - 1:
+                        if start_airport == nb_airport:
+                            end_airport = nb_airport + 1
+                        else:
+                            end_airport = nb_airport
+                        minimal_legal_start = previous.end_date + previous.tat
+                        start_date = minimal_legal_start - short_violation * 60
+                        upper_bound_solution_cost += tat_cost
+                    elif short and long and aircraft == nb_aircraft - 1:
+                        if start_airport == nb_airport + 2:
+                            end_airport = nb_airport + 3
+                        else:
+                            end_airport = nb_airport + 2
+                        minimal_legal_start = previous.end_date + previous.tat
+                        start_date = minimal_legal_start - short_violation * 60
+                        upper_bound_solution_cost += tat_cost
+                    else:
+                        end_airport = injective_airport(
+                            start_airport,
+                            truncated_norm(1, nb_airport - 1, (nb_airport - 1) / 2,
+                                           (nb_airport - 1) / 4))
+                        minimal_legal_start = previous.end_date + previous.tat
+                        on_ground_time = truncated_norm(
+                            min_on_ground, max_on_ground, mean_on_ground,
+                            var_on_ground) * 60
+                        start_date = minimal_legal_start + on_ground_time
 
 
                     # we start the index at 1
@@ -204,17 +297,35 @@ def instance_generator(nb_aircraft=default_nb_aircraft,
                     flight_object = models.Flight(flight_id, start_date, length_fly,
                                                   start_airport, end_airport, aircraft,
                                                   tat)
+                    # if we already got a flight starting from A to B, we get back the length of fly and TAT
+                    key = str(flight_object.start_airport) + '-' + str(flight_object.end_airport)
+                    if key not in flights_created:
+                        flights_created[key] = flight_object
+                    else:
+                        if verbose:
+                            print(
+                                "The flight {} - {} has already been added to the database, we retrieve the info".format(
+                                    start_airport, end_airport))
+                        unique_flight = flights_created[key]
+                        flight_object.length_fly = unique_flight.length_fly
+                        flight_object.tat = unique_flight.tat
+                        flight_object.end_date = flight_object.start_date + flight_object.length_fly
+
                     # we update maintenance counter
                     for maintenance in current_second_last_maintenance:
                         time_elapsed = flight_object.end_date - previous.end_date
                         current_second_last_maintenance[maintenance] += time_elapsed
-                    if not (start_airport, end_airport) in flights_created:
-                        flights_created[(start_airport, end_airport)] = flight_object
                     flights.append(flight_object)
                     flights_and_maintenances.append(flight_object)
 
     solution = models.Solution(nb_aircraft, nb_airport, flights, first_flight_aircraft
                                , flights_created, second_initial_counter, limit_second_last_maintenance, LENGTH_SEC_MAINTENANCE, AIRPORTS_MAINTENANCE)
+    if long:
+        # we have added two airports for the two special long airport
+        nb_airport += 2
+    if short:
+        # we have added two airports for the two special short tat airport
+        nb_airport += 2
     return solution, upper_bound_solution_cost
 
 
@@ -295,14 +406,23 @@ def main():
         help="This generate instances with default value for the previously listed arguments"
     )
 
-    parser.add_argument('--gantt',
+    parser.add_argument('--gannt',
                         action='store_true',
-                        help="This will output the gantt")
+                        help="This will output the gannt")
 
     parser.add_argument(
         '--verbose',
         action='store_true',
         help="To get more information while the data are generated")
+
+    parser.add_argument(
+        '--force_long',
+        action='store_true',
+        help="Force to have a long ground time flight by having two specific aircraft"
+    )
+    parser.add_argument('--long_minutes_ground_time',
+                        type=int,
+                        help="Minutes of ground time between the long flight")
 
     args = parser.parse_args()
 
@@ -404,9 +524,9 @@ def main():
             var_flight_per_aircraft, min_flight_per_aircraft,
             max_flight_per_aircraft, mean_tat, var_tat, min_tat, max_tat,
             mean_on_ground, var_on_ground, min_on_ground, max_on_ground,
-            args.verbose)
+            args.verbose, args.force_long, args.long_minutes_ground_time)
 
-    if args.gantt:
+    if args.gannt:
         gannt(solution)
 
     asp_input_fact(output_file, solution)
@@ -415,8 +535,6 @@ def main():
 def gannt(solution):
     assigned_air = [0 for i in range(solution.nb_aircraft)]
     df = []
-    # used to sort the flight by aircraft in the dataset, this allows to plot them correctly
-    assigned_flight_aircraft = [list() for i in range(solution.nb_aircraft)]
     for flight in solution.flights:
         dict_flight = dict()
         dict_flight["Task"] = "Aircraft " + str(flight.assigned_aircraft)
@@ -428,11 +546,7 @@ def gannt(solution):
         else:
             dict_flight["Resource"] = str(flight.start_airport) + " - " + str(flight.end_airport)
         dict_flight["Complete"] = flight.tat
-        assigned_flight_aircraft[flight.assigned_aircraft].append(dict_flight)
-    
-    for aicraft in range(solution.nb_aircraft):
-        for flight in assigned_flight_aircraft[aicraft]:
-            df.append(flight)
+        df.append(dict_flight)
 
     # we create a color for each flight + 1 for the maintenance
     colors = [
