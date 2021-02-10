@@ -63,7 +63,7 @@ def main():
                     clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"] + ['-t 8compete'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 else:
                     clingo = subprocess.Popen(["clingo"] + files_encoding + [basename(instance_temp.name)] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (stdoutdata, stderrdata) = clingo.communicate(timeout=7200)
+                (stdoutdata, stderrdata) = clingo.communicate(timeout=3600)
                 clingo.wait()
                 end = time.time()
                 duration = end - start
