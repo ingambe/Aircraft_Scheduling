@@ -149,8 +149,6 @@ import pandas as pd
 
 def main(prg):
 
-    # we stop if we have two time in a row the same cost
-    # for performance only, can be deactivated
     def handle_stop(m):
         """ This function keep track of the global best solution and the current iteration best solution
         It also handles the timer in order to stop if we don't find a solution after 60 second in the current iteration """
