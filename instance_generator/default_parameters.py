@@ -22,4 +22,4 @@ default_short = False
 default_short_violation = 15
 default_tat_cost = 500
 default_nb_airport_maintenance = 5
-default_length_maintenance = 240 * 60 # 4hours
+default_length_maintenance = 240 * 60  # 4hours

@@ -185,7 +185,7 @@ def main(prg):
         timer = threading.Timer(60.0, prg.interrupt)
         local_best_solution = [float('inf')]
         parts = []
-        parts.append(("step", [i]))
+        parts.append(("step", [clingo.Number(i)]))
         if i == 0:
             parts.append(("base", []))
         prg.cleanup()

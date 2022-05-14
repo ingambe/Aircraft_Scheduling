@@ -9,51 +9,59 @@ import time
 from os.path import basename
 
 sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance_generator/models')))
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "instance_generator/models")
+    )
+)
 
 from Flight import *
 from Solution import *
 
 sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance_generator')))
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "instance_generator"))
+)
 import route_gen
 import subprocess
 
 
 def gantt_solution(instance, solution):
-    '''
+    """
     We take the str of the instance and the solution as input
     We then parse it and create a gantt
-    '''
+    """
     # first remove annoying whitespace
     instance = instance.replace(" ", "")
     solution = solution.replace(" ", "")
 
     # utility for the parsing of inside each rule
-    number_regex = re.compile(r'[0-9]+')
+    number_regex = re.compile(r"[0-9]+")
     # some regex to parse the data
-    aircraft_regex = re.compile(r'aircraft\([0-9]+\)')
-    airport_regex = re.compile(r'airport\([0-9]+\)')
-    flight_regex = re.compile(r'flight\([0-9]+\)')
-    first_regex = re.compile(r'first\([0-9]+,[0-9]+\)')
-    airport_start_regex = re.compile(r'airport_start\([0-9]+,[0-9]+\)')
-    airport_end_regex = re.compile(r'airport_end\([0-9]+,[0-9]+\)')
-    start_regex = re.compile(r'start\([0-9]+,[0-9]+\)')
-    end_regex = re.compile(r'end\([0-9]+,[0-9]+\)')
-    tat_regex = re.compile(r'tat\([0-9]+,[0-9]+\)')
-    assign_regex = re.compile(r'assign\([0-9]+,[0-9]+\)')
-    maintenance_regex = re.compile(r'maintenance_after_flight\([0-9]+,[0-9]+\)')
-    length_maintenance_regex = re.compile(r'length_maintenance\(seven_day,[0-9]+\)')
+    aircraft_regex = re.compile(r"aircraft\([0-9]+\)")
+    airport_regex = re.compile(r"airport\([0-9]+\)")
+    flight_regex = re.compile(r"flight\([0-9]+\)")
+    first_regex = re.compile(r"first\([0-9]+,[0-9]+\)")
+    airport_start_regex = re.compile(r"airport_start\([0-9]+,[0-9]+\)")
+    airport_end_regex = re.compile(r"airport_end\([0-9]+,[0-9]+\)")
+    start_regex = re.compile(r"start\([0-9]+,[0-9]+\)")
+    end_regex = re.compile(r"end\([0-9]+,[0-9]+\)")
+    tat_regex = re.compile(r"tat\([0-9]+,[0-9]+\)")
+    assign_regex = re.compile(r"assign\([0-9]+,[0-9]+\)")
+    maintenance_regex = re.compile(r"maintenance_after_flight\([0-9]+,[0-9]+\)")
+    length_maintenance_regex = re.compile(r"length_maintenance\(seven_day,[0-9]+\)")
     maintenance_length = dict()
     if len(length_maintenance_regex.findall(instance)) > 0:
-        maintenance_length["seven_day"] = int(number_regex.findall(length_maintenance_regex.findall(instance)[0])[0])
+        maintenance_length["seven_day"] = int(
+            number_regex.findall(length_maintenance_regex.findall(instance)[0])[0]
+        )
 
-    airport_maintenance_regex = re.compile(r'airport_maintenance\(seven_day,[0-9]+\)')
+    airport_maintenance_regex = re.compile(r"airport_maintenance\(seven_day,[0-9]+\)")
     airport_maintenance = airport_maintenance_regex.findall(instance)
     airport_maintenance_int = dict()
-    airport_maintenance_int["seven_day"] = [int(number_regex.findall(x)[0]) for x in airport_maintenance]
+    airport_maintenance_int["seven_day"] = [
+        int(number_regex.findall(x)[0]) for x in airport_maintenance
+    ]
 
-    limit_counter_regex = re.compile(r'limit_counter\(seven_day,[0-9]+\)')
+    limit_counter_regex = re.compile(r"limit_counter\(seven_day,[0-9]+\)")
     limit_counter = limit_counter_regex.findall(instance)
     limit_counter_dict = dict()
     if len(limit_counter) > 0:
@@ -65,7 +73,9 @@ def gantt_solution(instance, solution):
 
     start_maint_count = dict()
 
-    airport_maintenance_regex = re.compile(r'start_maintenance_counter\(seven_day,[0-9]+,[0-9]+\)')
+    airport_maintenance_regex = re.compile(
+        r"start_maintenance_counter\(seven_day,[0-9]+,[0-9]+\)"
+    )
     parsed = airport_maintenance_regex.findall(instance)
     start_maint_count["seven_day"] = [0 for i in range(number_flights)]
     for parse in parsed:
@@ -125,8 +135,15 @@ def gantt_solution(instance, solution):
     flights = [None for x in range(number_flights)]
     for i in range(number_flights):
         length_flight = end[i] - start[i]
-        flight = Flight(i + 1, start[i], length_flight, airports_start[i], airports_end[i], fligth_aircraft_assigned[i],
-                        tat[i])
+        flight = Flight(
+            i + 1,
+            start[i],
+            length_flight,
+            airports_start[i],
+            airports_end[i],
+            fligth_aircraft_assigned[i],
+            tat[i],
+        )
         flights[i] = flight
 
     flights_created = dict()
@@ -149,20 +166,47 @@ def gantt_solution(instance, solution):
         numbers = number_regex.findall(parse)
         numbers = [int(x) for x in numbers]
         first_flight_assigned[numbers[1] - 1] = flights[numbers[0] - 1]
-    solution = Solution(number_aircrafts, number_airports, flights, first_flight_assigned, flights_created,
-                        start_maint_count, limit_counter_dict, maintenance_length, airport_maintenance_int)
-    answer_temp = tempfile.NamedTemporaryFile(mode="w+", suffix='.lp', dir=".", delete=False)
+    solution = Solution(
+        number_aircrafts,
+        number_airports,
+        flights,
+        first_flight_assigned,
+        flights_created,
+        start_maint_count,
+        limit_counter_dict,
+        maintenance_length,
+        airport_maintenance_int,
+    )
+    answer_temp = tempfile.NamedTemporaryFile(
+        mode="w+", suffix=".lp", dir=".", delete=False
+    )
     answer_temp.write(repr(solution))
     route_gen.gannt(solution)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate the solution and test it to ensure it is correct')
-    parser.add_argument('--encoding', type=str, help="the path to the encoding you want to use to solve the instance")
-    parser.add_argument('--instance', type=str, help="the path to the instance to solve ")
-    parser.add_argument('--output_file', type=str, help="the path to the output solution file")
-    parser.add_argument('--gantt', action='store_true', help="output the gantt of the solution")
-    parser.add_argument('--parallel', type=int, help="run the search in parallel on a given number of cores")
+    parser = argparse.ArgumentParser(
+        description="Generate the solution and test it to ensure it is correct"
+    )
+    parser.add_argument(
+        "--encoding",
+        type=str,
+        help="the path to the encoding you want to use to solve the instance",
+    )
+    parser.add_argument(
+        "--instance", type=str, help="the path to the instance to solve "
+    )
+    parser.add_argument(
+        "--output_file", type=str, help="the path to the output solution file"
+    )
+    parser.add_argument(
+        "--gantt", action="store_true", help="output the gantt of the solution"
+    )
+    parser.add_argument(
+        "--parallel",
+        type=int,
+        help="run the search in parallel on a given number of cores",
+    )
     args = parser.parse_args()
     instance = args.instance
     output_file = "solution_" + instance.split("/")[-1]
@@ -171,14 +215,31 @@ def main():
     start = time.time()
     if args.encoding is not None:
         if args.parallel is not None:
-            clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"] + ["-t {}compete".format(int(args.parallel))],
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            clingo = subprocess.Popen(
+                ["clingo"]
+                + [instance]
+                + [args.encoding]
+                + ["--outf=2"]
+                + ["-t {}compete".format(int(args.parallel))],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
         else:
-            clingo = subprocess.Popen(["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            clingo = subprocess.Popen(
+                ["clingo"] + [instance] + [args.encoding] + ["--outf=2"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
     else:
-        clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/parallel/incremental_encoding.lp'] + ["--outf=2"] + ["-t 8compete"],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        clingo = subprocess.Popen(
+            ["clingo"]
+            + [instance]
+            + ["encoding/parallel/incremental_encoding.lp"]
+            + ["--outf=2"]
+            + ["-t 8compete"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
     # clingo = subprocess.Popen(["clingo"] + [instance] + ['encoding/incremental_grounding/inc.lp'] + ['encoding/incremental_grounding/encoding.lp'] + ["--outf=2"],
     #                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutdata, stderrdata) = clingo.communicate()
@@ -190,10 +251,13 @@ def main():
     # print(stdoutdata)
     json_answers = json.loads(stdoutdata)
     # if we have found a solution
-    correct_solution = json_answers["Result"] == "SATISFIABLE" or json_answers["Result"] == "OPTIMUM FOUND"
-    cost = float('inf')
+    correct_solution = (
+        json_answers["Result"] == "SATISFIABLE"
+        or json_answers["Result"] == "OPTIMUM FOUND"
+    )
+    cost = float("inf")
     call = json_answers["Call"][-1]
-    #answer = call["Witnesses"][-1]
+    # answer = call["Witnesses"][-1]
     # we need to check all solution and get the best one
     for call_current in json_answers["Call"]:
         if "Witnesses" in call_current:
@@ -218,8 +282,16 @@ def main():
     answer_temp.write(answer_str)
     # this line is to wait to have finish to write
     answer_temp.flush()
-    clingo_check = subprocess.Popen(["clingo"] + ["test_solution/test_solution.lp"] + [answer_temp.name] + [
-        instance] + ["--outf=2"] + ["-q"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    clingo_check = subprocess.Popen(
+        ["clingo"]
+        + ["test_solution/test_solution.lp"]
+        + [answer_temp.name]
+        + [instance]
+        + ["--outf=2"]
+        + ["-q"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     (stdoutdata_check, stderrdata_check) = clingo_check.communicate()
     clingo_check.wait()
     json_check = json.loads(stdoutdata_check)
@@ -233,7 +305,10 @@ def main():
         print("The solution is correct")
     if args.gantt:
         clingo_facts_grounded = subprocess.Popen(
-            ["clingo"] + [instance] + ["--outf=2"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ["clingo"] + [instance] + ["--outf=2"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         (stdoutdata_instance, stderrdata_instance) = clingo_facts_grounded.communicate()
         clingo.wait()
         json_answers = json.loads(stdoutdata_instance)
