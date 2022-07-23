@@ -1,0 +1,14 @@
+Instances' size explained (flights per aircraft):
+    - small_instances:
+        - 50 average;
+        - 10 variance;
+        - 20 minimum;
+        - 80 maximum.
+
+    - medium_instances:
+        - 100 average;
+        - 20 variance;
+        - 50 minimum;
+        - 150 maximum.
+    
+    - large_instances:
