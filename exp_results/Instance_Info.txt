@@ -12,3 +12,7 @@ Instances' size explained (flights per aircraft):
         - 150 maximum.
     
     - large_instances:
+        - 130 average;
+        - 25 variance;
+        - 70 minumum;
+        - 190 maximum.
