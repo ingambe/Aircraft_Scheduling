@@ -278,7 +278,7 @@ def main(prg):
     df_iter = pd.DataFrame(timings_iter, columns=['Iteration', 'Starting time', 'Ending time', 'Solution found', 'Cost'])
     now = datetime.datetime.now()
     date_string = now.strftime("%d_%m_%Y_%H_%M_%S")
-    results_path = "results/inc_chunks_rel_70/"
+    results_path = "results/RS_chunks_70/"
     if not os.path.exists(results_path):
         os.mkdir(results_path)
     inst = str(prg.get_const("instance"))
